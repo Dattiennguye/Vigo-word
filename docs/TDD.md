@@ -39,6 +39,22 @@
 - **Render**: URP; UI bằng UI Toolkit.
 - **CI**: chạy unit test + test mô phỏng tất định (headless) mỗi lần push.
 
+### 2.3 Nền tảng: PC và Mobile (hai bản, một lõi)
+- **Một Simulation Core dùng chung** cho cả hai bản (Unity, cùng codebase). Nhờ mô phỏng tất định và định dạng lưu có phiên bản, bản lưu có thể **mang qua lại giữa PC và mobile**.
+- Mỗi nền tảng có **hồ sơ cấu hình (platform profile)** riêng, khai báo trong dữ liệu chứ không rải trong code:
+
+| Hạng mục | PC | Mobile |
+|---|---|---|
+| Quy mô thế giới mặc định | 30 quốc gia, ~300k ô | Thấp hơn (đề xuất 12–16 quốc gia, ~80k ô); có thể nâng lên ở máy mạnh |
+| Khung hình mục tiêu | 60 FPS | 30 FPS (ổn định, tiết kiệm pin) |
+| Bộ nhớ mục tiêu | < 6 GB | < 2,5 GB |
+| Điều khiển | Chuột + phím + phím tắt | Cảm ứng: chạm, kéo, véo zoom, xoay hai ngón |
+| UI | Bố cục dày thông tin | Bố cục thích ứng (UI Toolkit), nút lớn, bảng thu gọn |
+| Chiến trường 3D | Đầy đủ | Chế độ quan sát/giản lược |
+| Đồ họa | Nhiều mức, bóng/hiệu ứng cao | LOD mạnh hơn, giảm bóng/hạt, hạ độ phân giải |
+
+- Không bản nào được **thiếu luật chơi**: khác biệt chỉ ở quy mô, đồ họa và giao diện, không ở logic mô phỏng.
+
 ---
 
 ## 3. KIẾN TRÚC TỔNG THỂ
@@ -213,6 +229,15 @@ Không mô phỏng từng người ở L0/L1. Dùng **nhóm dân cư (cohort)** 
 ### 7.4 Nghiệm thu Giai đoạn 2
 - Xây đường, phân khu, công trình; dân cư vào ở và có việc làm; dịch vụ ảnh hưởng chỉ số.
 - 60 FPS ổn định với thành phố ~20.000 công trình trên máy tầm trung (mục tiêu; đo ở Spike).
+
+### 7.5 Chỉ số Chất lượng sống (QoL) – thước đo thành công của người chơi
+Game **không có điều kiện thắng/thua**; "thành công" là cuộc sống người dân tốt lên. QoL là chỉ số tổng hợp, tính ở cấp khu phố → thành phố → tỉnh → quốc gia:
+- Thành phần (trọng số cấu hình được): nhà ở, việc làm & thu nhập, thực phẩm/nước, y tế, giáo dục, an ninh, giao thông/thời gian di chuyển, môi trường (ô nhiễm, công viên), giải trí/văn hóa, ổn định & hòa bình.
+- Dân số tính theo **trọng số dân cư**, tránh để một thành phố giàu che lấp vùng nghèo; hiển thị cả **mức trung bình và mức thấp nhất (phân vị thấp)** để thấy bất bình đẳng.
+- Có biểu đồ xu hướng theo thời gian, bản đồ nhiệt QoL theo tỉnh/thành phố, và nhật ký "người dân nghĩ gì" (lý do hài lòng/bất mãn).
+- Chiến tranh, khủng hoảng, ô nhiễm, thất nghiệp kéo QoL xuống; phát triển cân bằng kéo lên → mọi con đường (kinh tế, ngoại giao, công nghệ, quân sự) đều đo bằng cùng một thước.
+- Có thể thêm **cột mốc tùy chọn** do người chơi tự đặt (ví dụ "QoL > 80 trong 10 năm"), chỉ mang tính ghi nhận, không kết thúc game.
+- AI quốc gia cũng được tính QoL; AI có thể dùng như một yếu tố trong tiện ích (quốc gia người dân bất mãn → bất ổn).
 
 ---
 
@@ -450,8 +475,8 @@ Quy tắc: **không bắt đầu giai đoạn n+1 khi giai đoạn n chưa qua t
 
 1. **Engine**: Unity (khuyến nghị) hay Unreal – chốt sau Technical Spike.
 2. **Chiến thuật 3D**: chỉ quan sát hay điều khiển trực tiếp ở bản đầu?
-3. **Nền tảng mục tiêu**: chỉ PC (Windows) hay thêm macOS/Linux/console? (ảnh hưởng ngân sách hiệu năng)
-4. **Điều kiện chiến thắng**: có điều kiện thắng rõ ràng (điểm, thống trị, kinh tế) hay chế độ sandbox mở?
+3. ~~Nền tảng mục tiêu~~ **ĐÃ CHỐT**: hai bản **PC và Mobile**, dùng chung lõi mô phỏng (mục 2.3). Còn cần chốt: hệ điều hành cụ thể (Windows; Android/iOS).
+4. ~~Điều kiện chiến thắng~~ **ĐÃ CHỐT**: sandbox vô tận, không có thắng/thua; thành công đo bằng Chất lượng sống của người dân (mục 7.5). Còn cần chốt: khi quốc gia của người chơi bị diệt/sáp nhập thì chơi tiếp thế nào (đề xuất: chuyển sang kiểm soát vùng còn lại hoặc "tái lập quốc gia" thay vì game over).
 5. **Thời đại/bối cảnh công nghệ**: hiện đại, hay có dòng thời gian nhiều thời đại?
 6. **Nguồn nội dung đồ họa**: tự làm asset, mua asset, hay sinh thủ tục là chính?
 
