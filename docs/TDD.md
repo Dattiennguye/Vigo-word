@@ -237,6 +237,9 @@ Không mô phỏng từng người ở L0/L1. Dùng **nhóm dân cư (cohort)** 
 - Xây đường, phân khu, công trình; dân cư vào ở và có việc làm; dịch vụ ảnh hưởng chỉ số.
 - 60 FPS ổn định với thành phố ~20.000 công trình trên máy tầm trung (mục tiêu; đo ở Spike).
 
+### 7.4b Tình trạng triển khai Giai đoạn 2
+**Lõi mô phỏng đã làm và có test** (đường/giao cắt/cầu, lô đất, phân khu, công trình tự phát triển, phủ dịch vụ theo đường đi, ô nhiễm, di cư, QoL kèm nhóm 20% thấp nhất, địa hình lấy từ thế giới). **Chưa làm:** Unity/3D, phân bổ lưu lượng giao thông, nhiều loại công trình theo GDD, kinh tế, LOD mô phỏng, đo hiệu năng 20.000 công trình. Chi tiết: [`docs/PHASE2.md`](PHASE2.md).
+
 ### 7.5 Chỉ số Chất lượng sống (QoL) – thước đo thành công của người chơi
 Game **không có điều kiện chiến thắng**: thế giới vô tận, "thành công" là cuộc sống người dân tốt lên. Điều kiện **thất bại duy nhất** là mất nước (mục 10.6). QoL là chỉ số tổng hợp, tính ở cấp khu phố → thành phố → tỉnh → quốc gia:
 - Thành phần (trọng số cấu hình được): nhà ở, việc làm & thu nhập, thực phẩm/nước, y tế, giáo dục, an ninh, giao thông/thời gian di chuyển, môi trường (ô nhiễm, công viên), giải trí/văn hóa, ổn định & hòa bình.

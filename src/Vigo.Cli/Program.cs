@@ -37,6 +37,27 @@ namespace Vigo.Cli
                     foreach (var kv in System.Linq.Enumerable.OrderByDescending(tally, x => x.Value)) Console.WriteLine($"  {kv.Value,3}  {kv.Key}");
                     return 0;
                 }
+            for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--city")
+                {
+                    var wc = new WorldConfig { Seed = seed, CellCount = 20000 };
+                    var world = WorldGenerator.Generate(wc);
+                    Directory.CreateDirectory(outDir);
+                    string which = args[i + 1];
+                    var pick = which == "port" ? world.Cities.Find(c => c.IsPort && c.Population > 20000) ?? world.Cities.Find(c => c.IsPort) : world.GetCity(world.Countries[0].Capital);
+                    var terr = new Vigo.Core.CityBuilder.WorldTerrain(world, pick.Id, 1000f);
+                    var sim = new Vigo.Core.CityBuilder.CitySim(terr, seed);
+                    Vigo.Core.CityBuilder.DemoScenario.BuildTown(sim);
+                    Console.WriteLine($"Thành phố {pick.Name} (cảng={pick.IsPort}), {sim.Edges.FindAll(e => e.Alive).Count} đoạn đường, {sim.Parcels.FindAll(q => q.Alive).Count} lô đất");
+                    Console.WriteLine("tuần  dân    nhà ở  việc  thấtnghiệp  QoL   QoL20%  yếu tố: việc làm/y tế/giáo dục/an ninh/đi lại/môi trường/giải trí");
+                    for (int wk = 1; wk <= 208; wk++)
+                    {
+                        sim.StepWeek();
+                        if (wk % 26 == 0) { var d = sim.Indicators; Console.WriteLine($"{wk,4} {d.Population,6} {d.Housing,6} {d.Jobs,5}   {d.UnemploymentRate,6:P0}   {d.QoL,5:0.00}  {d.QoLLowestQuintile,5:0.00}    {d.Employment:0.00}/{d.Health:0.00}/{d.Education:0.00}/{d.Safety:0.00}/{d.Commute:0.00}/{d.Environment:0.00}/{d.Leisure:0.00}"); }
+                    }
+                    CityRenderer.Render(sim, Path.Combine(outDir, "city_" + which + ".png"));
+                    return 0;
+                }
             Directory.CreateDirectory(outDir);
             var cfg = new WorldConfig { Seed = seed, CellCount = cells, CountryCount = countries };
             var sw = Stopwatch.StartNew();

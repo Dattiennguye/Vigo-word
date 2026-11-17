@@ -193,6 +193,8 @@ namespace Vigo.Tests
                 Assert(ok >= _sweepSeeds * 0.99, "dưới 99% seed hợp lệ");
             });
 
+            CityTests.Register(Add, Assert);
+
             int pass = 0, fail = 0;
             foreach (var t in Tests)
             {
