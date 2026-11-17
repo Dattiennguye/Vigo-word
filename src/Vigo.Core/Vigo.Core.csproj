@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Simulation Core: thuần C#, KHÔNG phụ thuộc UnityEngine. netstandard2.1 để Unity dùng được. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Vigo.Core</RootNamespace>
+    <AssemblyName>Vigo.Core</AssemblyName>
+  </PropertyGroup>
+</Project>

@@ -78,18 +78,20 @@
 ```
 
 ### 3.1 Cấu trúc assembly / thư mục
+Simulation Core là **dự án .NET độc lập** (netstandard2.1), không nằm trong Unity; Unity (PC + Android) tham chiếu DLL hoặc source của nó. Nhờ vậy test chạy ngoài Unity, nhanh và tất định.
 ```
-/Assets/Vigo/
-  Core/            (Simulation Core – không dùng UnityEngine)
-    Data/          WorldState, entity tables, ID types
-    Commands/      Command definitions + validators
-    Systems/       Economy, Population, Resource, Tech, Military, Diplomacy, War
-    AI/            Utility AI, personalities, planners
-    Generation/    World Generator stages
-    Save/          Serializer, migration
-  Presentation/    Rendering, camera, UI, audio
-  Tests/           EditMode (Core), PlayMode (smoke)
-/docs/             GDD.md, TDD.md
+/src/
+  Vigo.Core/        (Simulation Core – KHÔNG dùng UnityEngine)
+    Data/           WorldState, entities, ID mạnh kiểu, CellGrid
+    Generation/     World Generator (Terrain/Climate/Hydrology/Biome/Resource/Politics/Road/Name) + Validator
+    Commands/       (GĐ sau) Command + validators
+    Systems/        (GĐ sau) Economy, Population, Tech, Military, Diplomacy, War
+    AI/             (GĐ sau) Utility AI
+    Save/           (GĐ sau) Serializer, migration
+  Vigo.Tests/       Bộ test console (không cần NuGet)
+  Vigo.Cli/         Công cụ sinh thế giới + xuất bản đồ PNG, quét seed
+/Unity/             (GĐ sau) Presentation: render, camera, UI, audio — chỉ đọc snapshot, gửi Command
+/docs/              GDD.md, TDD.md, PHASE1.md
 ```
 
 ---
@@ -103,6 +105,8 @@ Phân cấp (GDD XI.3):
 `World → Continent → Country → Province → City → District → Building`
 
 ### 4.2 Lưu trữ trong bộ nhớ
+> **Thực tế Giai đoạn 1:** dữ liệu theo ô là struct-of-arrays; `Country/Province/City` (hàng trăm–nghìn đối tượng) dùng lớp đơn giản trong `List<>` với `Id == chỉ số`. Sẽ chuyển sang bảng cột khi cần (số lượng công trình/đơn vị lớn ở GĐ 2, 5).
+
 Dạng **bảng cột (struct-of-arrays)** thay vì cây đối tượng:
 - `Countries[]`, `Provinces[]`, `Cities[]`, `Buildings[]`, `Armies[]`, `Treaties[]`…
 - Quan hệ bằng khóa ngoại: `Province.OwnerCountryId`, `City.ProvinceId`, `Building.CityId`.
@@ -170,7 +174,7 @@ Mọi bước dùng **RNG riêng theo luồng** (`rng.Stream("terrain")`, `"coun
 
 ### 6.1 Các bước (pipeline)
 
-1. **Cell graph**: sinh điểm bằng Poisson-disk, nới lỏng Lloyd 2–3 vòng, dựng Voronoi/Delaunay. Cho ra ô đều tự nhiên, không có lưới vuông.
+1. **Cell graph**: sinh điểm bằng Poisson-disk (blue noise). Liên kết kề dựng bằng **đồ thị Gabriel** (tập con của Delaunay, liên thông, phẳng) thay vì Delaunay đầy đủ; mỗi điểm đại diện một ô Voronoi ngầm định (ô gần nhất). Không có lưới vuông. *(Đã làm; có thể nâng lên Delaunay/Voronoi đầy đủ + Lloyd nếu cần đa giác chính xác để render.)*
 2. **Địa hình**: heightmap bằng fBm/ridged noise có mặt nạ lục địa (domain warping), cộng các dãy núi tạo bằng đường “đứt gãy” ngẫu nhiên; ngưỡng mực nước biển theo `landRatio`. Xác định biển, hồ, bờ biển.
 3. **Xói mòn (nhẹ)**: vài trăm vòng thermal/hydraulic erosion trên heightfield để có thung lũng tự nhiên.
 4. **Khí hậu**: nhiệt độ theo vĩ độ + độ cao; độ ẩm theo khoảng cách biển + gió thịnh hành + hiệu ứng bóng mưa phía sau núi.
@@ -208,6 +212,9 @@ Mọi bước dùng **RNG riêng theo luồng** (`rng.Stream("terrain")`, `"coun
 - Camera 3 cấp (GDD X) khám phá được thế giới; có lớp bản đồ: địa hình, chính trị, tài nguyên, khí hậu.
 
 ---
+
+### 6.5 Tình trạng triển khai Giai đoạn 1
+**Đã làm xong và có test:** bước 1–15 ở trên (trừ xói mòn bước 3 chưa làm), Validator, hash tất định. Chi tiết số liệu đo được, hạn chế đã biết: xem [`docs/PHASE1.md`](PHASE1.md). **Chưa làm:** lớp camera/Unity 3 cấp và lớp bản đồ tương tác (thuộc Presentation).
 
 ## 7. ĐÔ THỊ (Giai đoạn 2)
 

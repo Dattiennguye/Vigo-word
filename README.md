@@ -7,4 +7,10 @@ Game mô phỏng xây dựng quốc gia, quản lý thành phố, kinh tế, cô
 - [TDD – Technical Design Document v1.0](docs/TDD.md)
 
 ## Trạng thái
-Giai đoạn thiết kế. Bước tiếp theo: Technical Spike (chốt engine), sau đó Giai đoạn 1 – World Generator.
+Giai đoạn 1 (World Generator) đã có lõi chạy được và có test: xem [docs/PHASE1.md](docs/PHASE1.md). Bước tiếp theo: Technical Spike trên Unity (PC + Android) cho lớp hiển thị, rồi Giai đoạn 2 – City Builder.
+
+## Chạy thử lõi sinh thế giới
+```bash
+dotnet run -c Release --project src/Vigo.Tests            # test
+dotnet run -c Release --project src/Vigo.Cli -- --seed 1  # sinh thế giới + xuất bản đồ vào ./out
+```
