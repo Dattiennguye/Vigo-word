@@ -43,7 +43,7 @@ function startPick() {
 function personality(p) { return { Trade: 'Thương mại', Industrial: 'Công nghiệp', Military: 'Quân sự', Technology: 'Công nghệ', Neutral: 'Trung lập', Expansionist: 'Bành trướng', Balanced: 'Cân bằng' }[p] || p; }
 function setPickCountry(id) {
   UI.pickCountry = id; WorldView.selCountry = id; WorldView.pulse = id >= 0; WorldView.dirty = true; const c = id >= 0 ? UI.info.countries[id] : null;
-  $('pickinfo').innerHTML = c ? `<div style="margin:8px 0"><span class="dot" style="display:inline-block;width:16px;height:16px;border-radius:50%;border:3px solid #2b2350;background:${countryColor(id)};vertical-align:middle"></span> <b style="font-size:18px">${c.name}</b><br><small>${personality(c.personality)} · ${c.provinces} tỉnh · ${fmt(c.pop)} dân${c.port ? ' · có cảng' : ' · không có cảng'}</small></div>` : '';
+  $('pickinfo').innerHTML = c ? `<div style="margin:8px 0"><span class="dot" style="display:inline-block;width:16px;height:16px;border-radius:50%;border:3px solid #3b2a18;background:${countryColor(id)};vertical-align:middle"></span> <b style="font-size:18px">${c.name}</b><br><small>${personality(c.personality)} · ${c.provinces} tỉnh · ${fmt(c.pop)} dân${c.port ? ' · có cảng' : ' · không có cảng'}</small></div>` : '';
   $('pickgo').disabled = !c;
 }
 $('pickgo').onclick = async () => {

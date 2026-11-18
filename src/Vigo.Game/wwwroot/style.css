@@ -105,3 +105,45 @@ input[type=range]{width:100%;padding:0;border:none;background:none;accent-color:
 .pick-hint{pointer-events:auto;position:absolute;left:50%;top:70px;transform:translateX(-50%);background:var(--paper);border:4px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:12px 18px;width:min(420px,calc(100% - 24px));text-align:center;font-size:14px}
 .pick-hint .btn.big{margin-top:8px;font-size:17px;padding:9px}
 @media (min-width:821px){.pick-hint{left:calc(50% - 180px)}}
+
+/* ===== Giao diện "Sử thi": giấy da, mực nâu, đồng thau — nghiêm trang, mang hơi hướng lịch sử ===== */
+:root{
+  --ink:#2a1d12; --ink2:#6b5538; --paper:#eadbb8; --panel:#e4d3aa; --line:#3b2a18;
+  --sun:#c79a3a; --grass:#6f8a55; --berry:#8c3b2a; --teal:#4f7f7a; --violet:#6b4a6e; --orange:#b5703a;
+  --shadow:0 2px 0 rgba(40,28,16,.55), 0 8px 18px rgba(40,28,16,.35);
+  --brass:linear-gradient(#d8b25a,#a67c2c); --crimson:linear-gradient(#a24a36,#6e2a1c);
+}
+html,body{background:#1d2a36;font-family:Georgia,"Palatino Linotype","Times New Roman",serif;font-weight:600}
+.screen{background:radial-gradient(circle at 50% 30%,#3a4f63 0,#25384a 55%,#141f2a 100%)}
+.start-card,.pick-hint,.modal-card,#provcard,.toast,#tooltip,#citymsg{border:2px solid var(--line);border-radius:6px;background:linear-gradient(#efe1bf,#e2cfa1);outline:1px solid rgba(199,154,58,.7);outline-offset:-6px;box-shadow:var(--shadow)}
+.logo{font-family:Georgia,serif;font-weight:900;letter-spacing:10px;color:#a67c2c;-webkit-text-stroke:1px #3b2a18;text-shadow:0 2px 0 #f3e3b0,0 4px 6px rgba(0,0,0,.35)}
+.sub{color:var(--berry);letter-spacing:3px;font-style:italic}
+#topbar,#citybar{background:linear-gradient(#4a3a28,#33261a);border-bottom:3px solid #b08a3a;color:#f3e6c4}
+#topbar .who span,#topbar small{color:#cbb98f}
+.stat{background:rgba(243,230,196,.12);border:1px solid #b08a3a;border-radius:4px;color:#f3e6c4}
+.flagchip{border:2px solid #b08a3a;border-radius:2px}
+.btn{border:2px solid var(--line);border-radius:4px;background:var(--crimson);color:#f6e7c0;box-shadow:0 2px 0 #2a1d12,inset 0 1px 0 rgba(255,255,255,.18);letter-spacing:.3px;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.btn.big{background:var(--brass);color:#2a1d12;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+.btn.icon{background:linear-gradient(#5a4630,#3b2c1c);color:#f3e6c4;border-color:#b08a3a}
+.btn.icon.on{background:var(--brass);color:#2a1d12}
+.btn.red{background:var(--crimson)}.btn.blue{background:linear-gradient(#5b7f98,#3d5c74);color:#f3e6c4}
+input,select{border:2px solid var(--line);border-radius:4px;background:#f6ecd0}
+#stage{background:#2f4a60}
+#side{background:var(--panel);border-left:3px solid #b08a3a}
+#tabs{background:#33261a;border-bottom:3px solid #b08a3a}
+#tabs button{background:#5a4630;color:#e8d8ae;border:2px solid #b08a3a;border-bottom:none;border-radius:4px 4px 0 0}
+#tabs button.on{background:var(--panel);color:var(--ink)}
+.badge{background:var(--berry);border:1px solid #f3e6c4;border-radius:4px}
+.card,.crow,.saves .sv{background:#f1e5c6;border:2px solid #8a6b3a;border-radius:4px}
+.crow:hover{background:#f7edcf}.crow .dot{border:2px solid var(--line);border-radius:3px}
+.bar{height:14px;border:2px solid var(--line);border-radius:2px;background:#cdb98b}.bar i{border-radius:0}
+.news{border-bottom:1px dashed #a88c58}
+.tag2{border:1px solid var(--line);border-radius:3px}
+.tag2.war{background:#c9705a}.tag2.ally{background:#9fb878}.tag2.pact{background:#8fa9b8}.tag2.trade{background:#d6b565}
+.toast.bad{background:#e3b9a6}.toast.good{background:#c9d8a8}
+#modal,#cityprompt{background:rgba(20,14,8,.6)}
+#cityview{background:linear-gradient(#c9d6d8,#ece4cc)}
+#citytools,#cityhud{background:rgba(234,219,184,.96);border:2px solid var(--line);border-radius:6px;outline:1px solid rgba(199,154,58,.7);outline-offset:-5px}
+#citytools .btn{background:linear-gradient(#f1e5c6,#dccb9d);color:var(--ink);text-shadow:none;box-shadow:0 1px 0 #8a6b3a}
+#citytools .btn.sel{background:var(--brass);color:#2a1d12}
+#citytools .grp{color:var(--ink2);letter-spacing:2px}

@@ -1,6 +1,6 @@
 // Bản đồ thế giới: vẽ ô địa lý + chính trị bằng Canvas 2D theo phong cách hoạt hình, có kéo/phóng to.
 const BIOME = ['Biển', 'Hồ', 'Băng', 'Lãnh nguyên', 'Rừng thông', 'Thảo nguyên', 'Đồng cỏ', 'Rừng', 'Đầm lầy', 'Sa mạc', 'Xavan', 'Rừng nhiệt đới', 'Cao nguyên', 'Núi'];
-const BIOME_COLOR = ['#3aa3f0', '#58c2ff', '#f1fbff', '#d9e6d0', '#4e9e5a', '#c9dc6d', '#79d94f', '#3fae4a', '#6bbf9a', '#f7dc7a', '#f0b856', '#1f9a52', '#b8c27a', '#a69b94'];
+const BIOME_COLOR = ['#35566e', '#4a7189', '#e8ecee', '#cdd3b8', '#6f8a55', '#a8a763', '#8aa05a', '#5f7d4a', '#7e9a74', '#d6c28c', '#c49a5a', '#4f7650', '#a6a46c', '#8c8278'];
 
 const WorldView = {
   SC: 1.5, cv: null, ctx: null, M: null, I: null, owners: null, view: { s: 1, tx: 0, ty: 0 },
@@ -32,22 +32,22 @@ const WorldView = {
   buildTerrain() {
     const M = this.M, SC = this.SC, c = document.createElement('canvas'); c.width = Math.ceil(M.width * SC); c.height = Math.ceil(M.height * SC);
     const g = c.getContext('2d'); const r = M.spacing * SC * 0.95;
-    g.fillStyle = '#4fb4ff'; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#34536b'; g.fillRect(0, 0, c.width, c.height);
     // biển: sáng gần bờ, đậm ngoài khơi
     for (let i = 0; i < M.n; i++) {
       if (M.elev[i] > 0 && !(M.flags[i] & 2)) continue; const lake = (M.flags[i] & 2) || !(M.flags[i] & 1);
       const d = Math.min(1, Math.max(0, -M.elev[i] / 40));
-      g.fillStyle = lake ? '#5ccaff' : `hsl(${205 - d * 8},${88 - d * 10}%,${66 - d * 20}%)`;
+      g.fillStyle = lake ? '#56798f' : `hsl(${204 - d * 6},${34 - d * 6}%,${44 - d * 16}%)`;
       g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r * 1.05, 0, 6.3); g.fill();
     }
     // đất: viền tối trước, rồi tô màu quần xã (hoạt hình)
-    g.fillStyle = '#2b2350';
+    g.fillStyle = '#3b2a18';
     for (let i = 0; i < M.n; i++) { if (M.elev[i] <= 0 || (M.flags[i] & 2)) continue; g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r + 1.6, 0, 6.3); g.fill(); }
     for (let i = 0; i < M.n; i++) {
       if (M.elev[i] <= 0 || (M.flags[i] & 2)) continue;
       const base = BIOME_COLOR[M.biome[i]] || '#79d94f'; g.fillStyle = base; g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r, 0, 6.3); g.fill();
       const h = Math.min(1, M.elev[i] / 70); if (h > 0.45) { g.fillStyle = `rgba(255,255,255,${(h - 0.45) * 0.45})`; g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC - r * 0.15, r * 0.7, 0, 6.3); g.fill(); }
-      if (M.flags[i] & 4) { g.fillStyle = '#58c2ff'; g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r * 0.45, 0, 6.3); g.fill(); }
+      if (M.flags[i] & 4) { g.fillStyle = '#56798f'; g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r * 0.45, 0, 6.3); g.fill(); }
     }
     this.terrain = c;
   },
@@ -61,7 +61,7 @@ const WorldView = {
     c.width = Math.ceil(M.width * SC); c.height = Math.ceil(M.height * SC); const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
     const r = M.spacing * SC * 0.95; const own = this.owners;
     const cellOwner = (i) => { const p = M.province[i]; return p >= 0 ? own[p] : -1; };
-    for (let i = 0; i < M.n; i++) { const o = cellOwner(i); if (o < 0 || M.elev[i] <= 0 || (M.flags[i] & 2)) continue; g.fillStyle = countryColor(o, 58, 78); g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r, 0, 6.3); g.fill(); }
+    for (let i = 0; i < M.n; i++) { const o = cellOwner(i); if (o < 0 || M.elev[i] <= 0 || (M.flags[i] & 2)) continue; g.fillStyle = countryColor(o, 52, 46); g.beginPath(); g.arc(M.x[i] * SC, M.y[i] * SC, r, 0, 6.3); g.fill(); }
     // đường biên giới: chấm tại trung điểm giữa hai ô khác nước / khác tỉnh
     const bc = this.borders && this.borders.width === c.width ? this.borders : document.createElement('canvas'); bc.width = c.width; bc.height = c.height; const gb = bc.getContext('2d'); gb.clearRect(0, 0, bc.width, bc.height);
     const cs = this.hcs, hw = this.hw;
@@ -72,7 +72,7 @@ const WorldView = {
         for (const j of this.hash[gy * hw + gx]) {
           if (j <= i || M.elev[j] <= 0) continue; const ddx = M.x[i] - M.x[j], ddy = M.y[i] - M.y[j]; if (ddx * ddx + ddy * ddy > (M.spacing * 1.7) ** 2) continue;
           const o2 = cellOwner(j); if (o2 < 0) continue; const pi = M.province[i], pj = M.province[j];
-          if (o2 !== o) { gb.fillStyle = '#2b2350'; gb.beginPath(); gb.arc((M.x[i] + M.x[j]) * SC / 2, (M.y[i] + M.y[j]) * SC / 2, 1.9, 0, 6.3); gb.fill(); }
+          if (o2 !== o) { gb.fillStyle = '#3b2a18'; gb.beginPath(); gb.arc((M.x[i] + M.x[j]) * SC / 2, (M.y[i] + M.y[j]) * SC / 2, 1.9, 0, 6.3); gb.fill(); }
           else if (pi !== pj) { gb.fillStyle = 'rgba(43,35,80,.35)'; gb.beginPath(); gb.arc((M.x[i] + M.x[j]) * SC / 2, (M.y[i] + M.y[j]) * SC / 2, 1.0, 0, 6.3); gb.fill(); }
         }
       }
@@ -136,7 +136,7 @@ const WorldView = {
   frame() {
     if (!this.dirty && !this.pulse) return; this.dirty = false; if (!this.terrain) return;
     const ctx = this.ctx, d = this.dpr, v = this.view; const W = this.cv.width, H = this.cv.height;
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#4fb4ff'; ctx.fillRect(0, 0, W, H);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#34536b'; ctx.fillRect(0, 0, W, H);
     ctx.setTransform(d * v.s / this.SC, 0, 0, d * v.s / this.SC, d * v.tx, d * v.ty); ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(this.terrain, 0, 0); if (this.politic) { ctx.globalAlpha = 0.62; ctx.drawImage(this.politic, 0, 0); ctx.globalAlpha = 1; if (this.borders) ctx.drawImage(this.borders, 0, 0); }
     // làm nổi bật tỉnh/quốc gia đang chọn hoặc rê chuột
@@ -157,11 +157,11 @@ const WorldView = {
       const s = Math.max(5, Math.min(14, 5 + v.s * 1.1)) * k;
       if (mine) { ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(x, y, s * 1.25, 0, 6.3); ctx.fill(); }
       // nhà hoạt hình: thân + mái
-      ctx.lineWidth = 2; ctx.strokeStyle = '#2b2350'; ctx.fillStyle = '#fff3d6'; ctx.beginPath(); ctx.rect(x - s * 0.55, y - s * 0.2, s * 1.1, s * 0.8); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = owner >= 0 ? countryColor(owner, 52, 80) : '#ff5d8f'; ctx.beginPath(); ctx.moveTo(x - s * 0.8, y - s * 0.15); ctx.lineTo(x, y - s * 0.95); ctx.lineTo(x + s * 0.8, y - s * 0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
-      if (c.capital) { ctx.fillStyle = '#ffc93c'; ctx.beginPath(); ctx.arc(x, y - s * 1.2, s * 0.32, 0, 6.3); ctx.fill(); ctx.stroke(); }
+      ctx.lineWidth = 2; ctx.strokeStyle = '#3b2a18'; ctx.fillStyle = '#fff3d6'; ctx.beginPath(); ctx.rect(x - s * 0.55, y - s * 0.2, s * 1.1, s * 0.8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = owner >= 0 ? countryColor(owner, 44, 50) : '#8c3b2a'; ctx.beginPath(); ctx.moveTo(x - s * 0.8, y - s * 0.15); ctx.lineTo(x, y - s * 0.95); ctx.lineTo(x + s * 0.8, y - s * 0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (c.capital) { ctx.fillStyle = '#d8b25a'; ctx.beginPath(); ctx.arc(x, y - s * 1.2, s * 0.32, 0, 6.3); ctx.fill(); ctx.stroke(); }
       if (cs && cs.open) { ctx.font = `${Math.round(s * 1.1)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('🏙', x + s * 1.1, y - s * 0.4); }
-      if (v.s > this.minS * 3.2 || c.capital && v.s > this.minS * 1.8) { ctx.font = '700 11px "Trebuchet MS",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(c.name, x, y + s * 1.3 + 8); ctx.fillStyle = '#2b2350'; ctx.fillText(c.name, x, y + s * 1.3 + 8); }
+      if (v.s > this.minS * 3.2 || c.capital && v.s > this.minS * 1.8) { ctx.font = '700 11px Georgia,serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(c.name, x, y + s * 1.3 + 8); ctx.fillStyle = '#3b2a18'; ctx.fillText(c.name, x, y + s * 1.3 + 8); }
     }
   },
 
@@ -171,10 +171,10 @@ const WorldView = {
       for (const c of this.I.countries) {
         if (c.elim) continue; const live = this.countryLive && this.countryLive[c.id]; if (live && live.elim) continue;
         const [x, y] = this.toScreen(live && live.cx !== undefined ? live.cx : c.cx, live && live.cy !== undefined ? live.cy : c.cy); const size = Math.max(11, Math.min(20, 9 + v.s * 3));
-        ctx.font = `900 ${size}px "Trebuchet MS",sans-serif`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.strokeText(c.name, x, y); ctx.fillStyle = c.id === this.player ? '#d6246b' : '#2b2350'; ctx.fillText(c.name, x, y);
+        ctx.font = `900 ${size}px Georgia,serif`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(240,226,190,.92)'; ctx.strokeText(c.name, x, y); ctx.fillStyle = c.id === this.player ? '#d6246b' : '#3b2a18'; ctx.fillText(c.name, x, y);
       }
     } else {
-      this.I.provinces.forEach((p, i) => { const [x, y] = this.toScreen(p.cx, p.cy); const size = Math.max(10, Math.min(15, 8 + v.s * 0.8)); ctx.font = `800 ${size}px "Trebuchet MS",sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(p.name, x, y); ctx.fillStyle = '#2b2350'; ctx.fillText(p.name, x, y); });
+      this.I.provinces.forEach((p, i) => { const [x, y] = this.toScreen(p.cx, p.cy); const size = Math.max(10, Math.min(15, 8 + v.s * 0.8)); ctx.font = `800 ${size}px Georgia,serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(p.name, x, y); ctx.fillStyle = '#3b2a18'; ctx.fillText(p.name, x, y); });
     }
   }
 };

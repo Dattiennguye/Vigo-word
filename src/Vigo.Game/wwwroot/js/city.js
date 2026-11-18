@@ -37,7 +37,7 @@ const CityView = {
   buildTools() {
     const t = $('citytools'); let h = '<div class="grp">Điều khiển</div><button class="btn sel" data-k="pan">✋ Kéo bản đồ</button>';
     h += '<div class="grp">Đường</div>' + ROAD.map((r, i) => `<button class="btn" data-k="road" data-v="${i}">🛣 ${r.name}</button>`).join('');
-    h += '<div class="grp">Phân khu</div>' + [1, 2, 3, 4].map((z) => `<button class="btn" data-k="zone" data-v="${z}"><span style="display:inline-block;width:12px;height:12px;border:2px solid #2b2350;border-radius:4px;background:${ZONE[z].col}"></span> ${ZONE[z].name}</button>`).join('');
+    h += '<div class="grp">Phân khu</div>' + [1, 2, 3, 4].map((z) => `<button class="btn" data-k="zone" data-v="${z}"><span style="display:inline-block;width:12px;height:12px;border:2px solid #3b2a18;border-radius:4px;background:${ZONE[z].col}"></span> ${ZONE[z].name}</button>`).join('');
     h += '<div class="grp">Dịch vụ</div>' + SERVICE.map((s) => `<button class="btn" data-k="service" data-v="${s.i}">${s.name}</button>`).join('');
     h += '<div class="grp">Khác</div><button class="btn" data-k="demolish">💥 Phá bỏ</button>';
     t.innerHTML = h; t.querySelectorAll('button').forEach((b) => b.onclick = () => { this.tool = { kind: b.dataset.k, v: +(b.dataset.v || 0) }; t.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b)); this.say(this.toolHelp()); });

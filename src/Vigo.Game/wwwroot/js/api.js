@@ -15,4 +15,4 @@ const pct = (v) => Math.round(v * 100) + '%';
 function hsl(h, s, l) { return `hsl(${Math.round(h) % 360},${s}%,${l}%)`; }
 // Màu quốc gia: tươi, dễ phân biệt (góc vàng) — dùng cho cả bản đồ lẫn giao diện.
 function countryHue(id) { return (id * 137.508 + 20) % 360; }
-function countryColor(id, l = 60, s = 68) { return hsl(countryHue(id), s, l); }
+function countryColor(id, l = 50, s = 42) { return hsl(countryHue(id), s, l); }

@@ -8,10 +8,10 @@
   const mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   const rgb = (c, f) => { f = f || 1; return `rgb(${Math.min(255, c[0] * f) | 0},${Math.min(255, c[1] * f) | 0},${Math.min(255, c[2] * f) | 0})`; };
   const hex = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
-  const GRASS = [[137, 226, 104], [118, 214, 96]], DARK = [74, 170, 80], ROCK = [162, 148, 132], SNOW = [246, 250, 255], SAND = [244, 225, 158], DIRT = [166, 120, 74];
-  const WALLS = ['#fff1d6', '#ffd9c7', '#d7f0ff', '#e6ffd1', '#fff0a8', '#f6dcff'], ROOFS = ['#ff6b6b', '#5f8bff', '#8b5cf6', '#ff9f43', '#2fb59b', '#d9534f'];
-  const TOWERS = ['#6fb6ff', '#9a8cff', '#5fd3c0', '#ff9ec4', '#8fd36a'], CARS = ['#ff5d5d', '#ffd23f', '#4fb6ff', '#ffffff', '#7a5cff', '#2fd2a0', '#ff9a3c', '#3b3f55'];
-  const OL = 'rgba(35,28,70,.55)';
+  const GRASS = [[132, 156, 92], [118, 146, 82]], DARK = [78, 112, 68], ROCK = [150, 138, 122], SNOW = [236, 238, 234], SAND = [214, 196, 146], DIRT = [140, 104, 68];
+  const WALLS = ['#e8dcc0', '#d9c8a4', '#cfc3ad', '#e3d2b0', '#c9b48f', '#ddd0b8'], ROOFS = ['#a8452f', '#8c3b2a', '#6e6a6c', '#b5653a', '#7a4a34', '#5d5457'];
+  const TOWERS = ['#b9ae98', '#a79c86', '#c4b8a0', '#9d9486', '#b3a58c'], CARS = ['#7a2e24', '#3f4f6b', '#8a7a5a', '#d8cdb4', '#3a4a3a', '#6a5a48', '#9a6a3a', '#2e3238'];
+  const OL = 'rgba(48,32,16,.6)';
   const M = 400; // vành đai cảnh quan quanh thành phố (m)
 
   const Art = {
@@ -63,7 +63,7 @@
     // ---------- cây cối & cảnh vật ----------
     tree(x, y, t, s, sd, alt) {
       const c = this.ctx, k = this.k, bx = this.sx(x, y), by = this.sy(x, y, 0), u = k * s;
-      const g = [[47, 174, 60], [70, 190, 72], [96, 200, 66], [40, 150, 80]][(sd * 4) | 0], snow = alt > 46, aut = !snow && sd > 0.975 ? [255, 160, 60] : null, lc = aut || (snow ? mixc(g, SNOW, 0.55) : g);
+      const g = [[70, 120, 62], [86, 132, 66], [108, 140, 64], [58, 104, 70]][(sd * 4) | 0], snow = alt > 46, aut = !snow && sd > 0.975 ? [190, 120, 50] : null, lc = aut || (snow ? mixc(g, SNOW, 0.55) : g);
       c.lineWidth = 1; c.strokeStyle = OL;
       if (t === 0) { // thông
         c.fillStyle = 'rgba(30,40,70,.18)'; c.beginPath(); c.ellipse(bx + 3 * u, by + 1.5 * u, 5 * u, 2.5 * u, 0, 0, 6.3); c.fill();
@@ -78,7 +78,7 @@
       } else if (t === 3) { // đá
         c.fillStyle = rgb(ROCK, 1.05); c.beginPath(); c.moveTo(bx - 4 * u, by); c.lineTo(bx - 3 * u, by - 3.5 * u); c.lineTo(bx + 0.5 * u, by - 5 * u); c.lineTo(bx + 4 * u, by - 2.5 * u); c.lineTo(bx + 4.5 * u, by); c.closePath(); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(bx - 3 * u, by - 3.5 * u); c.lineTo(bx + 0.5 * u, by - 5 * u); c.lineTo(bx + 1 * u, by - 2.6 * u); c.closePath(); c.fill();
       } else { // hoa
-        const cols = ['#ff6b9a', '#ffd23f', '#ffffff', '#b58cff']; for (let i = 0; i < 5; i++) { const dx = (hh(sd * 1e4 | 0, i, 1) - 0.5) * 9, dy = (hh(sd * 1e4 | 0, i, 2) - 0.5) * 4; c.fillStyle = cols[(hh(sd * 1e4 | 0, i, 3) * 4) | 0]; c.beginPath(); c.arc(bx + dx * u, by + dy * u, 1.1 * u + 0.6, 0, 6.3); c.fill(); }
+        const cols = ['#ff6b9a', '#d9c27a', '#ffffff', '#b58cff']; for (let i = 0; i < 5; i++) { const dx = (hh(sd * 1e4 | 0, i, 1) - 0.5) * 9, dy = (hh(sd * 1e4 | 0, i, 2) - 0.5) * 4; c.fillStyle = cols[(hh(sd * 1e4 | 0, i, 3) * 4) | 0]; c.beginPath(); c.arc(bx + dx * u, by + dy * u, 1.1 * u + 0.6, 0, 6.3); c.fill(); }
       }
     },
     lamp(x, y) { const c = this.ctx, u = this.k, bx = this.sx(x, y), by = this.sy(x, y, 0); c.strokeStyle = '#3a3a52'; c.lineWidth = Math.max(1, 0.7 * u); c.beginPath(); c.moveTo(bx, by); c.lineTo(bx, by - 8 * u); c.lineTo(bx + 1.8 * u, by - 8.4 * u); c.stroke(); c.fillStyle = '#fff2a8'; c.beginPath(); c.arc(bx + 2 * u, by - 8.2 * u, 1.3 * u + 0.5, 0, 6.3); c.fill(); },
@@ -109,17 +109,17 @@
       // trụ cầu
       for (const e of bridges) { const A = N[e[0]], B = N[e[1]], L = Math.hypot(B[0] - A[0], B[1] - A[1]); c.strokeStyle = '#6d6a86'; c.lineWidth = Math.max(2, 2.2 * k); for (let s = 8; s < L - 4; s += 28) { const x = A[0] + (B[0] - A[0]) * s / L, y = A[1] + (B[1] - A[1]) * s / L; c.beginPath(); c.moveTo(this.sx(x, y), this.sy(x, y, 1.5)); c.lineTo(this.sx(x, y), this.sy(x, y, -3)); c.stroke(); } }
       // vỉa hè → lòng đường
-      for (const e of D.edges) this.strip(N[e[0]], N[e[1]], RW[e[2]] / 2 + 2.2, 0.0, e[3] ? '#b9b3a6' : '#cfc9bd', true, !!e[3]);
-      N.forEach((p, i) => { if (G.deg[i]) this.disc(p[0], p[1], G.nhw[i] + 2.2, 0.0, '#cfc9bd', G.inc[i].some((ei) => D.edges[ei][3]) && G.inc[i].every((ei) => D.edges[ei][3])); });
-      for (const e of D.edges) this.strip(N[e[0]], N[e[1]], RW[e[2]] / 2, 0.08, e[3] ? '#6c6f86' : '#5d6277', true, !!e[3]);
-      N.forEach((p, i) => { if (G.deg[i]) this.disc(p[0], p[1], G.nhw[i], 0.08, '#5d6277', G.inc[i].every((ei) => D.edges[ei][3])); });
+      for (const e of D.edges) this.strip(N[e[0]], N[e[1]], RW[e[2]] / 2 + 2.2, 0.0, e[3] ? '#8f8470' : '#a99d84', true, !!e[3]);
+      N.forEach((p, i) => { if (G.deg[i]) this.disc(p[0], p[1], G.nhw[i] + 2.2, 0.0, '#a99d84', G.inc[i].some((ei) => D.edges[ei][3]) && G.inc[i].every((ei) => D.edges[ei][3])); });
+      for (const e of D.edges) this.strip(N[e[0]], N[e[1]], RW[e[2]] / 2, 0.08, e[3] ? '#6a5e50' : '#7a6c58', true, !!e[3]);
+      N.forEach((p, i) => { if (G.deg[i]) this.disc(p[0], p[1], G.nhw[i], 0.08, '#7a6c58', G.inc[i].every((ei) => D.edges[ei][3])); });
       // vạch kẻ
       c.lineCap = 'butt'; c.lineJoin = 'round';
       for (const e of D.edges) {
         const A = N[e[0]], B = N[e[1]], t = e[2], hw = RW[t] / 2, sa = G.deg[e[0]] > 1 ? G.nhw[e[0]] + 1.5 : 1, sb = G.deg[e[1]] > 1 ? G.nhw[e[1]] + 1.5 : 1;
         if (t === 1) { c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = ws(0.5); c.setLineDash([k * 5, k * 5]); this.line(A, B, 0, sa, sb, !!e[3]); }
-        else if (t === 2) { c.setLineDash([]); c.strokeStyle = '#ffd23f'; c.lineWidth = ws(0.45); this.line(A, B, 0.45, sa, sb, !!e[3]); this.line(A, B, -0.45, sa, sb, !!e[3]); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = ws(0.4); c.setLineDash([k * 5, k * 6]); this.line(A, B, hw / 2, sa, sb, !!e[3]); this.line(A, B, -hw / 2, sa, sb, !!e[3]); }
-        else if (t === 3) { c.setLineDash([]); c.strokeStyle = '#ffd23f'; c.lineWidth = ws(0.6); this.line(A, B, 0.6, sa, sb, !!e[3]); this.line(A, B, -0.6, sa, sb, !!e[3]); c.strokeStyle = '#fff'; c.lineWidth = ws(0.45); this.line(A, B, hw - 1.2, sa, sb, !!e[3]); this.line(A, B, -hw + 1.2, sa, sb, !!e[3]); c.setLineDash([k * 6, k * 7]); this.line(A, B, hw / 2.2, sa, sb, !!e[3]); this.line(A, B, -hw / 2.2, sa, sb, !!e[3]); }
+        else if (t === 2) { c.setLineDash([]); c.strokeStyle = '#d9c27a'; c.lineWidth = ws(0.45); this.line(A, B, 0.45, sa, sb, !!e[3]); this.line(A, B, -0.45, sa, sb, !!e[3]); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = ws(0.4); c.setLineDash([k * 5, k * 6]); this.line(A, B, hw / 2, sa, sb, !!e[3]); this.line(A, B, -hw / 2, sa, sb, !!e[3]); }
+        else if (t === 3) { c.setLineDash([]); c.strokeStyle = '#d9c27a'; c.lineWidth = ws(0.6); this.line(A, B, 0.6, sa, sb, !!e[3]); this.line(A, B, -0.6, sa, sb, !!e[3]); c.strokeStyle = '#fff'; c.lineWidth = ws(0.45); this.line(A, B, hw - 1.2, sa, sb, !!e[3]); this.line(A, B, -hw + 1.2, sa, sb, !!e[3]); c.setLineDash([k * 6, k * 7]); this.line(A, B, hw / 2.2, sa, sb, !!e[3]); this.line(A, B, -hw / 2.2, sa, sb, !!e[3]); }
         c.setLineDash([]);
         if (e[3]) { c.strokeStyle = '#f4f1ff'; c.lineWidth = ws(0.9); this.line(A, B, hw + 0.3, 0, 0, true, 1.2); this.line(A, B, -hw - 0.3, 0, 0, true, 1.2); c.strokeStyle = '#8a86a8'; c.lineWidth = ws(0.5); this.line(A, B, hw + 0.3, 0, 0, true, 0.2); this.line(A, B, -hw - 0.3, 0, 0, true, 0.2); }
       }
@@ -144,53 +144,53 @@
       const lot = (col) => this.polyW(this.rect(x, y, 22, 22), 0.06, col, 'rgba(35,28,70,.18)', 1);
       const A = (w, d) => this.rect(x, y, w, d);
       if (kind === 0) {
-        lot('#a5ec80'); this.shadow(x, y, 9); const h = 6 + lv * 2.5, wall = WALLS[(v * 6) | 0], roof = ROOFS[(hh(id, 1, 9) * 6) | 0], w = 12 + (v < 0.5 ? 1 : 0) * 2, d = 12;
+        lot('#a3b878'); this.shadow(x, y, 9); const h = 6 + lv * 2.5, wall = WALLS[(v * 6) | 0], roof = ROOFS[(hh(id, 1, 9) * 6) | 0], w = 12 + (v < 0.5 ? 1 : 0) * 2, d = 12;
         // hàng rào + bụi
         this.prism(this.rect(x - 1, y + 9.5, 17, 0.8), 0, 1.4, '#ffffff', { lw: 0.8 });
         this.prism(A(w, d), 0, h, wall);
         const P = A(w, d), l0 = P[3], l1 = P[2], r0 = P[2], r1 = P[1];
-        this.fq(l0, l1, 0.42, 0.58, 0, 4.2, '#9a6a45', OL); this.windows(l0, l1, 0.0, 2, Math.max(1, Math.floor((h - 1) / 4.5)), 0.16, 2.2, 1.5, '#bfe9ff'); if (lv >= 1) this.windows(r0, r1, 0.0, 2, Math.max(1, Math.floor((h - 1) / 4.5)), 0.16, 2.2, 1.5, '#bfe9ff');
+        this.fq(l0, l1, 0.42, 0.58, 0, 4.2, '#9a6a45', OL); this.windows(l0, l1, 0.0, 2, Math.max(1, Math.floor((h - 1) / 4.5)), 0.16, 2.2, 1.5, '#9fb8bd'); if (lv >= 1) this.windows(r0, r1, 0.0, 2, Math.max(1, Math.floor((h - 1) / 4.5)), 0.16, 2.2, 1.5, '#9fb8bd');
         if (v < 0.6) { this.hip(x, y, w + 3, d + 3, h, 6 + lv, roof); this.prism(this.rect(x + 3, y - 2, 2.2, 2.2), h + 1, h + 7, '#b0705a', { lw: 0.8 }); } else { this.prism(A(w + 1, d + 1), h, h + 1, '#ece7f5'); this.prism(this.rect(x - 2, y - 2, 5, 4), h + 1, h + 3, roof, { lw: 0.8 }); }
       } else if (kind === 1) {
-        lot('#d6d3de'); this.shadow(x, y, 11); const h = 20 + lv * 11, col = TOWERS[(v * 5) | 0], w = 15, d = 15, P = A(w, d);
+        lot('#bdb5a2'); this.shadow(x, y, 11); const h = 20 + lv * 11, col = TOWERS[(v * 5) | 0], w = 15, d = 15, P = A(w, d);
         this.prism(P, 0, h, col); this.prism(A(w + 1.5, d + 1.5), 0, 2, '#eee9f7');
-        const rows = Math.floor((h - 4) / 4.5); this.windows(P[3], P[2], 2, 4, rows, 0.15, 2.3, 1.7, '#e8fbff'); this.windows(P[2], P[1], 2, 4, rows, 0.15, 2.3, 1.7, '#d3eef8');
+        const rows = Math.floor((h - 4) / 4.5); this.windows(P[3], P[2], 2, 4, rows, 0.15, 2.3, 1.7, '#c9d6d2'); this.windows(P[2], P[1], 2, 4, rows, 0.15, 2.3, 1.7, '#b4c4c2');
         this.prism(A(w - 3, d - 3), h, h + 2.2, '#ece7f5'); this.prism(this.rect(x - 2, y + 1, 4, 3), h + 2.2, h + 4.5, '#8a86a8', { lw: 0.8 }); c.strokeStyle = '#45405f'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(this.sx(x + 3, y - 3), this.sy(x + 3, y - 3, h + 2.2)); c.lineTo(this.sx(x + 3, y - 3), this.sy(x + 3, y - 3, h + 9)); c.stroke(); c.fillStyle = '#ff5d5d'; c.beginPath(); c.arc(this.sx(x + 3, y - 3), this.sy(x + 3, y - 3, h + 9), 1.3 * k + 0.6, 0, 6.3); c.fill();
       } else if (kind === 2) {
-        lot('#e1ddea'); this.shadow(x, y, 10); const h = 8 + lv * 4, P = A(16, 15), col = ['#ffd54a', '#ffb36b', '#ff9ec4', '#9be3ff'][(v * 4) | 0];
-        this.prism(P, 0, h, col); this.windows(P[2], P[1], 4.5, 3, Math.max(1, Math.floor((h - 5) / 4)), 0.22, 2.4, 1.5, '#d8f4ff');
+        lot('#c4baa4'); this.shadow(x, y, 10); const h = 8 + lv * 4, P = A(16, 15), col = ['#d6b46a', '#c99a70', '#c78a7a', '#a9bcc0'][(v * 4) | 0];
+        this.prism(P, 0, h, col); this.windows(P[2], P[1], 4.5, 3, Math.max(1, Math.floor((h - 5) / 4)), 0.22, 2.4, 1.5, '#b9ccca');
         // mái hiên sọc
-        const a = P[3], b2 = P[2]; for (let i = 0; i < 8; i++) { const u0 = i / 8, u1 = (i + 1) / 8, c2 = this.ctx; const px = (u) => a[0] + (b2[0] - a[0]) * u, py = (u) => a[1] + (b2[1] - a[1]) * u; c2.beginPath(); c2.moveTo(this.sx(px(u0), py(u0)), this.sy(px(u0), py(u0), 4.2)); c2.lineTo(this.sx(px(u1), py(u1)), this.sy(px(u1), py(u1), 4.2)); c2.lineTo(this.sx(px(u1), py(u1) + 3.2), this.sy(px(u1), py(u1) + 3.2, 3)); c2.lineTo(this.sx(px(u0), py(u0) + 3.2), this.sy(px(u0), py(u0) + 3.2, 3)); c2.closePath(); c2.fillStyle = i % 2 ? '#ffffff' : '#ff5d5d'; c2.fill(); c2.strokeStyle = OL; c2.lineWidth = 0.8; c2.stroke(); }
+        const a = P[3], b2 = P[2]; for (let i = 0; i < 8; i++) { const u0 = i / 8, u1 = (i + 1) / 8, c2 = this.ctx; const px = (u) => a[0] + (b2[0] - a[0]) * u, py = (u) => a[1] + (b2[1] - a[1]) * u; c2.beginPath(); c2.moveTo(this.sx(px(u0), py(u0)), this.sy(px(u0), py(u0), 4.2)); c2.lineTo(this.sx(px(u1), py(u1)), this.sy(px(u1), py(u1), 4.2)); c2.lineTo(this.sx(px(u1), py(u1) + 3.2), this.sy(px(u1), py(u1) + 3.2, 3)); c2.lineTo(this.sx(px(u0), py(u0) + 3.2), this.sy(px(u0), py(u0) + 3.2, 3)); c2.closePath(); c2.fillStyle = i % 2 ? '#e9dfc6' : '#8c3b2a'; c2.fill(); c2.strokeStyle = OL; c2.lineWidth = 0.8; c2.stroke(); }
         this.fq(a, b2, 0.15, 0.85, 0.2, 2.8, '#7a5d4a', OL);
         this.prism(this.rect(x + 2, y - 1, 9, 1.4), h, h + 4, '#fff7d6', { lw: 0.8 }); this.fq([x - 2.5, y - 0.3], [x + 6.5, y - 0.3], 0.1, 0.9, h + 0.6, h + 3.4, '#ff5d8f');
       } else if (kind === 3) {
-        lot('#cfcbd8'); this.shadow(x, y, 11); const h = 8 + lv * 2, P = A(18, 14);
-        this.prism(P, 0, h, '#b8a6ff'); this.windows(P[3], P[2], 2.2, 5, 1, 0.12, 2, 1.2, '#2e2a52'); this.fq(P[2], P[1], 0.3, 0.7, 0, 5.2, '#4a4468', OL);
+        lot('#b3ab9a'); this.shadow(x, y, 11); const h = 8 + lv * 2, P = A(18, 14);
+        this.prism(P, 0, h, '#8d8294'); this.windows(P[3], P[2], 2.2, 5, 1, 0.12, 2, 1.2, '#2e2a52'); this.fq(P[2], P[1], 0.3, 0.7, 0, 5.2, '#4a4468', OL);
         // mái răng cưa
-        for (let i = 0; i < 3; i++) { const cx = x - 6 + i * 6, ya = y; this.prism(this.rect(cx, ya, 5.2, 13), h, h + 3, '#8f7be0', { lw: 0.8 }); }
+        for (let i = 0; i < 3; i++) { const cx = x - 6 + i * 6, ya = y; this.prism(this.rect(cx, ya, 5.2, 13), h, h + 3, '#6f6577', { lw: 0.8 }); }
         // silo + ống khói
-        this.prism(this.rect(x - 8, y - 9, 4, 4), 0, h + 14, '#7a6ec9', { lw: 0.9 }); this.fq([x - 10, y - 7], [x - 6, y - 7], 0, 1, h + 6, h + 8, '#ff5d8f'); this.fq([x - 10, y - 7], [x - 6, y - 7], 0, 1, h + 11, h + 13, '#ffffff');
+        this.prism(this.rect(x - 8, y - 9, 4, 4), 0, h + 14, '#6a6070', { lw: 0.9 }); this.fq([x - 10, y - 7], [x - 6, y - 7], 0, 1, h + 6, h + 8, '#ff5d8f'); this.fq([x - 10, y - 7], [x - 6, y - 7], 0, 1, h + 11, h + 13, '#ffffff');
         this.prism(this.rect(x + 8, y - 8, 3.4, 3.4), 0, h + 3, '#9b9bb5', { lw: 0.9 }); const sc = { x: x - 8, y: y - 9, z: h + 14 }; objs.smoke = objs.smoke || []; objs.smoke.push(sc);
         this.prism(this.rect(x + 8, y + 3, 4, 5), 0, 3, '#d3b278', { lw: 0.8 });
       } else if (kind === 4) {
-        lot('#b8ef90'); this.shadow(x, y, 11); const P = A(18, 12);
-        this.prism(P, 0, 10, '#ffb27a'); this.windows(P[3], P[2], 1.5, 5, 2, 0.12, 2.6, 1.4, '#bfe9ff'); this.windows(P[2], P[1], 1.5, 3, 2, 0.14, 2.6, 1.4, '#bfe9ff'); this.fq(P[3], P[2], 0.44, 0.56, 0, 4, '#8a5a34', OL);
-        this.hip(x, y, 21, 15, 10, 5, '#7a5cff'); this.prism(this.rect(x + 3, y - 2, 4, 4), 10, 18, '#ffe6bf', { lw: 0.9 }); this.hip(x + 3, y - 2, 6, 6, 18, 4, '#7a5cff');
+        lot('#a9bd7e'); this.shadow(x, y, 11); const P = A(18, 12);
+        this.prism(P, 0, 10, '#c99a70'); this.windows(P[3], P[2], 1.5, 5, 2, 0.12, 2.6, 1.4, '#9fb8bd'); this.windows(P[2], P[1], 1.5, 3, 2, 0.14, 2.6, 1.4, '#9fb8bd'); this.fq(P[3], P[2], 0.44, 0.56, 0, 4, '#8a5a34', OL);
+        this.hip(x, y, 21, 15, 10, 5, '#7a3f32'); this.prism(this.rect(x + 3, y - 2, 4, 4), 10, 18, '#ffe6bf', { lw: 0.9 }); this.hip(x + 3, y - 2, 6, 6, 18, 4, '#7a3f32');
         c.strokeStyle = '#45405f'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(this.sx(x - 7, y + 8), this.sy(x - 7, y + 8, 0)); c.lineTo(this.sx(x - 7, y + 8), this.sy(x - 7, y + 8, 12)); c.stroke(); c.fillStyle = '#ff5d5d'; c.fillRect(this.sx(x - 7, y + 8), this.sy(x - 7, y + 8, 12), 5 * k + 2, 3 * k + 1.5);
-        this.prism(this.rect(x + 6, y + 8.5, 3, 3), 0, 1, '#ffd23f', { lw: 0.7 }); this.badge(x, y, 25, '🏫');
+        this.prism(this.rect(x + 6, y + 8.5, 3, 3), 0, 1, '#d9c27a', { lw: 0.7 }); this.badge(x, y, 25, '🏫');
       } else if (kind === 5) {
-        lot('#e8e6f0'); this.shadow(x, y, 12); const P = A(20, 16);
-        this.prism(P, 0, 18, '#ffffff'); this.windows(P[3], P[2], 2, 6, 3, 0.1, 2.4, 1.6, '#9fd6ff'); this.windows(P[2], P[1], 2, 4, 3, 0.12, 2.4, 1.6, '#9fd6ff');
-        this.prism(A(12, 10), 18, 24, '#f4f4fa'); const cx = x, cy = y; this.polyW([[cx - 1.2, cy - 4, 24.12], [cx + 1.2, cy - 4, 24.12], [cx + 1.2, cy + 4, 24.12], [cx - 1.2, cy + 4, 24.12]], 0, '#ff3b4f'); this.polyW([[cx - 4, cy - 1.2, 24.14], [cx + 4, cy - 1.2, 24.14], [cx + 4, cy + 1.2, 24.14], [cx - 4, cy + 1.2, 24.14]], 0, '#ff3b4f');
-        this.fq(P[2], P[1], 0.35, 0.65, 0, 4.5, '#6ec2ff', OL); this.badge(x, y, 32, '🏥');
+        lot('#cfc7b2'); this.shadow(x, y, 12); const P = A(20, 16);
+        this.prism(P, 0, 18, '#ffffff'); this.windows(P[3], P[2], 2, 6, 3, 0.1, 2.4, 1.6, '#a5bfc4'); this.windows(P[2], P[1], 2, 4, 3, 0.12, 2.4, 1.6, '#a5bfc4');
+        this.prism(A(12, 10), 18, 24, '#f4f4fa'); const cx = x, cy = y; this.polyW([[cx - 1.2, cy - 4, 24.12], [cx + 1.2, cy - 4, 24.12], [cx + 1.2, cy + 4, 24.12], [cx - 1.2, cy + 4, 24.12]], 0, '#9c2f2a'); this.polyW([[cx - 4, cy - 1.2, 24.14], [cx + 4, cy - 1.2, 24.14], [cx + 4, cy + 1.2, 24.14], [cx - 4, cy + 1.2, 24.14]], 0, '#9c2f2a');
+        this.fq(P[2], P[1], 0.35, 0.65, 0, 4.5, '#6f8fa4', OL); this.badge(x, y, 32, '🏥');
       } else if (kind === 6) {
-        lot('#d8e2f4'); this.shadow(x, y, 10); const P = A(16, 14);
-        this.prism(P, 0, 12, '#6ea8ff'); this.windows(P[3], P[2], 2, 4, 2, 0.14, 2.4, 1.6, '#e0f0ff'); this.fq(P[3], P[2], 0.4, 0.6, 0, 4.4, '#2a4a8c', OL); this.prism(A(17, 15), 12, 13.2, '#e8f1ff');
-        this.prism(this.rect(x, y, 4, 3), 13.2, 15.4, '#2a4a8c', { lw: 0.8 }); c.fillStyle = '#ff3b4f'; c.beginPath(); c.arc(this.sx(x - 1, y), this.sy(x - 1, y, 16.2), 1.2 * k + 0.7, 0, 6.3); c.fill(); c.fillStyle = '#3b8bff'; c.beginPath(); c.arc(this.sx(x + 1, y), this.sy(x + 1, y, 16.2), 1.2 * k + 0.7, 0, 6.3); c.fill();
+        lot('#c3c6bc'); this.shadow(x, y, 10); const P = A(16, 14);
+        this.prism(P, 0, 12, '#6f879c'); this.windows(P[3], P[2], 2, 4, 2, 0.14, 2.4, 1.6, '#c4d2d4'); this.fq(P[3], P[2], 0.4, 0.6, 0, 4.4, '#2a4a8c', OL); this.prism(A(17, 15), 12, 13.2, '#e8f1ff');
+        this.prism(this.rect(x, y, 4, 3), 13.2, 15.4, '#2a4a8c', { lw: 0.8 }); c.fillStyle = '#9c2f2a'; c.beginPath(); c.arc(this.sx(x - 1, y), this.sy(x - 1, y, 16.2), 1.2 * k + 0.7, 0, 6.3); c.fill(); c.fillStyle = '#3b8bff'; c.beginPath(); c.arc(this.sx(x + 1, y), this.sy(x + 1, y, 16.2), 1.2 * k + 0.7, 0, 6.3); c.fill();
         this.prism(this.rect(x + 9, y + 8, 4, 2), 0, 1.8, '#f5f5ff', { lw: 0.7 }); this.badge(x, y, 23, '👮');
       } else { // công viên
-        this.polyW(this.rect(x, y, 24, 24), 0.06, '#6fd96a', 'rgba(35,28,70,.25)', 1); this.polyW([[x - 12, y - 1.5], [x + 12, y - 1.5], [x + 12, y + 1.5], [x - 12, y + 1.5]], 0.08, '#f0dca8'); this.polyW([[x - 1.5, y - 12], [x + 1.5, y - 12], [x + 1.5, y + 12], [x - 1.5, y + 12]], 0.08, '#f0dca8');
-        c.fillStyle = '#6ad1ff'; c.strokeStyle = OL; c.lineWidth = 1; c.beginPath(); c.ellipse(this.sx(x, y), this.sy(x, y, 0.5), 5 * k * 1.4, 5 * k * 0.7, 0, 0, 6.3); c.fill(); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(this.sx(x, y), this.sy(x, y, 0.5)); c.lineTo(this.sx(x, y), this.sy(x, y, 7)); c.stroke();
+        this.polyW(this.rect(x, y, 24, 24), 0.06, '#7fa05c', 'rgba(35,28,70,.25)', 1); this.polyW([[x - 12, y - 1.5], [x + 12, y - 1.5], [x + 12, y + 1.5], [x - 12, y + 1.5]], 0.08, '#f0dca8'); this.polyW([[x - 1.5, y - 12], [x + 1.5, y - 12], [x + 1.5, y + 12], [x - 1.5, y + 12]], 0.08, '#f0dca8');
+        c.fillStyle = '#6f98ad'; c.strokeStyle = OL; c.lineWidth = 1; c.beginPath(); c.ellipse(this.sx(x, y), this.sy(x, y, 0.5), 5 * k * 1.4, 5 * k * 0.7, 0, 0, 6.3); c.fill(); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(this.sx(x, y), this.sy(x, y, 0.5)); c.lineTo(this.sx(x, y), this.sy(x, y, 7)); c.stroke();
         this.prism(this.rect(x - 8, y + 3.5, 4, 1.4), 0, 1.4, '#9b6a3a', { lw: 0.7 });
         for (const [dx, dy, t] of [[-8, -8, 1], [8, -8, 0], [-8, 8, 1], [8, 8, 1], [9, 1, 2], [-3, -7, 4]]) this.tree(x + dx, y + dy, t, 1, hh(id, dx, dy), 0);
       }
@@ -202,9 +202,9 @@
       const D = this.data, S = D.size, T = this.T, c = this.ctx, k = this.k, objs = [];
       this.roadGeom(); this.smokes_ctx = {};
       // trời + núi xa
-      const sky = c.createLinearGradient(0, 0, 0, this.ch); sky.addColorStop(0, '#9fe2ff'); sky.addColorStop(0.6, '#d9f6ff'); sky.addColorStop(1, '#f4fcff'); c.fillStyle = sky; c.fillRect(0, 0, this.cw, this.ch);
+      const sky = c.createLinearGradient(0, 0, 0, this.ch); sky.addColorStop(0, '#a9bcc4'); sky.addColorStop(0.6, '#d8d6c2'); sky.addColorStop(1, '#efe6cc'); c.fillStyle = sky; c.fillRect(0, 0, this.cw, this.ch);
       this.zo = 0; const edgeA = -M - 20, edgeB = S + M + 20;
-      for (const [lay, col, hs] of [[0, '#b7cfe8', 190], [1, '#9dc2d9', 130]]) {
+      for (const [lay, col, hs] of [[0, '#9aa6a8', 190], [1, '#7f8f8c', 130]]) {
         c.beginPath(); const pts = []; for (let t = 0; t <= 1.0001; t += 1 / 60) { const x = edgeA + (edgeB - edgeA) * t; pts.push([x, edgeA - lay * 30, 40 + vn(x, 0, 140, 21 + lay) * hs + vn(x, 9, 50, 30) * 30]); } for (let t = 0; t <= 1.0001; t += 1 / 60) { const y = edgeA + (edgeB - edgeA) * t; pts.push([edgeA - lay * 30, y, 40 + vn(0, y, 140, 41 + lay) * hs + vn(9, y, 50, 50) * 30]); }
         // theo cạnh trên cùng (x nhỏ & y nhỏ): nối hai cạnh sau
         const back = []; for (let t = 0; t <= 1.0001; t += 1 / 50) { const y = edgeB - (edgeB - edgeA) * t; back.push([edgeA - lay * 30, y, 40 + vn(0, y, 140, 41 + lay) * hs]); } for (let t = 0; t <= 1.0001; t += 1 / 50) { const x = edgeA + (edgeB - edgeA) * t; back.push([x, edgeA - lay * 30, 40 + vn(x, 0, 140, 21 + lay) * hs]); }
@@ -222,7 +222,7 @@
         const Q = (z) => [[this.sx(x0, y0), this.sy(x0, y0, z === undefined ? za : z)], [this.sx(x1, y0), this.sy(x1, y0, z === undefined ? zb : z)], [this.sx(x1, y1), this.sy(x1, y1, z === undefined ? zc : z)], [this.sx(x0, y1), this.sy(x0, y1, z === undefined ? zd : z)]];
         const edgeFront = gx === n - 1 || gy === n - 1;
         if (wat) {
-          const q = Q(-3); c.beginPath(); q.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = ((gx + gy) & 1) ? '#52c8ff' : '#4cc0fb'; c.fill(); c.strokeStyle = c.fillStyle; c.lineWidth = 1; c.stroke(); if (hh(gx, gy, 77) < 0.14) waterCenters.push([x0 + st / 2, y0 + st / 2, hh(gx, gy, 5)]);
+          const q = Q(-3); c.beginPath(); q.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = ((gx + gy) & 1) ? '#5a8aa3' : '#547f98'; c.fill(); c.strokeStyle = c.fillStyle; c.lineWidth = 1; c.stroke(); if (hh(gx, gy, 77) < 0.14) waterCenters.push([x0 + st / 2, y0 + st / 2, hh(gx, gy, 5)]);
           if (edgeFront) { const base = this.sy(x1, y1, -3); }
           continue;
         }
@@ -268,7 +268,7 @@
       let len = 0; const L = E.map((e) => { const l = Math.hypot(N[e[1]][0] - N[e[0]][0], N[e[1]][1] - N[e[0]][1]); len += l; return l; }); this.elen = L;
       const inc = N.map(() => []); E.forEach((e, i) => { inc[e[0]].push(i); inc[e[1]].push(i); }); this.inc = inc;
       const pop = D.indicators.pop || 0, load = cl(pop / 1500 + 0.12, 0.12, 1.1), n = Math.min(110, Math.round(len / 55 * load)), nw = Math.min(70, Math.round(len / 80 * cl(pop / 600, 0.1, 1)));
-      const mk = (walk) => { const ei = (Math.random() * E.length) | 0, fwd = Math.random() < 0.5, r = Math.random(); return { e: ei, fwd, s: Math.random() * L[ei], v: walk ? 2 + Math.random() : 12 + Math.random() * 6, type: walk ? 9 : r < 0.1 ? 2 : r < 0.18 ? 1 : 0, col: walk ? ['#ff6b9a', '#4fb6ff', '#ffd23f', '#7a5cff', '#2fd2a0'][(Math.random() * 5) | 0] : CARS[(Math.random() * CARS.length) | 0], side: Math.random() < 0.5 ? 1 : -1 }; };
+      const mk = (walk) => { const ei = (Math.random() * E.length) | 0, fwd = Math.random() < 0.5, r = Math.random(); return { e: ei, fwd, s: Math.random() * L[ei], v: walk ? 2 + Math.random() : 12 + Math.random() * 6, type: walk ? 9 : r < 0.1 ? 2 : r < 0.18 ? 1 : 0, col: walk ? ['#ff6b9a', '#4fb6ff', '#d9c27a', '#7a5cff', '#2fd2a0'][(Math.random() * 5) | 0] : CARS[(Math.random() * CARS.length) | 0], side: Math.random() < 0.5 ? 1 : -1 }; };
       for (let i = 0; i < n; i++) this.cars.push(mk(false)); for (let i = 0; i < nw; i++) this.walkers.push(mk(true));
     },
     stepCars(dt) {
@@ -289,12 +289,20 @@
         if (it.w) { const bx = sxp, by = this.sy(p.x, p.y, 0), u = this.k, bob = Math.sin(t / 120 + p.x) * 0.4 * u; c.fillStyle = a.col; c.fillRect(bx - 1 * u - 0.3, by - 3.6 * u + bob - 0.5, 2 * u + 0.6, 2.4 * u + 1); c.fillStyle = '#ffd7b0'; c.beginPath(); c.arc(bx, by - 4.4 * u + bob, 0.9 * u + 0.5, 0, 6.3); c.fill(); continue; }
         const dx = p.dx, dy = p.dy, px = -dy, py = dx, len = a.type === 2 ? 8 : a.type === 1 ? 6.4 : 5, wid = 2.6, hl = len / 2, hwid = wid / 2;
         const P = [[p.x - dx * hl - px * hwid, p.y - dy * hl - py * hwid], [p.x + dx * hl - px * hwid, p.y + dy * hl - py * hwid], [p.x + dx * hl + px * hwid, p.y + dy * hl + py * hwid], [p.x - dx * hl + px * hwid, p.y - dy * hl + py * hwid]];
-        const body = a.type === 2 ? (hex(a.col)[0] > 200 ? '#ffd23f' : '#ff9a3c') : a.col; c.fillStyle = 'rgba(30,40,70,.22)'; this.polyW(P.map((q) => [q[0] + 0.8, q[1] + 0.8]), 0.02, 'rgba(30,40,70,.22)');
+        const body = a.type === 2 ? (hex(a.col)[0] > 200 ? '#d9c27a' : '#ff9a3c') : a.col; c.fillStyle = 'rgba(30,40,70,.22)'; this.polyW(P.map((q) => [q[0] + 0.8, q[1] + 0.8]), 0.02, 'rgba(30,40,70,.22)');
         this.prism(P, 0.3, 1.9 + (a.type === 2 ? 1.2 : 0), body, { lw: 0.7 });
         const cab = a.type === 2 ? [[p.x + dx * (hl - 3.6) - px * hwid * 0.85, p.y + dy * (hl - 3.6) - py * hwid * 0.85], [p.x + dx * (hl - 0.2) - px * hwid * 0.85, p.y + dy * (hl - 0.2) - py * hwid * 0.85], [p.x + dx * (hl - 0.2) + px * hwid * 0.85, p.y + dy * (hl - 0.2) + py * hwid * 0.85], [p.x + dx * (hl - 3.6) + px * hwid * 0.85, p.y + dy * (hl - 3.6) + py * hwid * 0.85]] : [[p.x - dx * 1.6 - px * hwid * 0.85, p.y - dy * 1.6 - py * hwid * 0.85], [p.x + dx * 1.1 - px * hwid * 0.85, p.y + dy * 1.1 - py * hwid * 0.85], [p.x + dx * 1.1 + px * hwid * 0.85, p.y + dy * 1.1 + py * hwid * 0.85], [p.x - dx * 1.6 + px * hwid * 0.85, p.y - dy * 1.6 + py * hwid * 0.85]];
-        if (a.type === 2) this.prism(cab, 1.9, 4.2, '#3b3f55', { lw: 0.6, top: '#4a4f6b' }); else this.prism(cab, 1.9, 3.1, '#bfe9ff', { lw: 0.6, top: '#dff4ff' });
+        if (a.type === 2) this.prism(cab, 1.9, 4.2, '#3b3f55', { lw: 0.6, top: '#4a4f6b' }); else this.prism(cab, 1.9, 3.1, '#9fb8bd', { lw: 0.6, top: '#dff4ff' });
       }
       this.zo = 0;
+    },
+
+    // hậu kỳ: bảo hoà thấp, ngả nâu như tranh cổ + tối viền
+    finish(cc) {
+      const w = this.cache.width, h = this.cache.height; cc.setTransform(1, 0, 0, 1, 0, 0);
+      try { const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h; tmp.getContext('2d').drawImage(this.cache, 0, 0); if ('filter' in cc) { cc.clearRect(0, 0, w, h); cc.filter = 'saturate(.62) sepia(.22) contrast(1.04)'; cc.drawImage(tmp, 0, 0); cc.filter = 'none'; } } catch (e) { }
+      cc.globalCompositeOperation = 'multiply'; cc.fillStyle = 'rgba(214,190,140,.22)'; cc.fillRect(0, 0, w, h); cc.globalCompositeOperation = 'source-over';
+      const g = cc.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.62); g.addColorStop(0, 'rgba(40,24,8,0)'); g.addColorStop(1, 'rgba(40,24,8,.38)'); cc.fillStyle = g; cc.fillRect(0, 0, w, h); cc.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     },
 
     // ---------- khung hình ----------
@@ -307,7 +315,7 @@
         if (!this.cache) this.cache = document.createElement('canvas'); this.cw = Math.round(w * 1.6); this.ch = Math.round(h * 1.6); this.cache.width = Math.round(this.cw * d); this.cache.height = Math.round(this.ch * d);
         const cc = this.cache.getContext('2d'); cc.setTransform(d, 0, 0, d, 0, 0); this.cOx = this.ox; this.cOy = this.oy; this.cKey = key;
         const sox = this.ox, soy = this.oy; this.ox += w * 0.3; this.oy += h * 0.3; this.ctx = cc; try { this.renderStatic(); } finally { this.ctx = cvx; this.ox = sox; this.oy = soy; }
-        this.cars = null;
+        this.finish(cc); this.cars = null;
       }
       if (!this.cars) this.spawnCars();
       const c = cvx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, this.cv.width, this.cv.height);
