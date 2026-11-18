@@ -13,6 +13,9 @@ namespace Vigo.Core
             _s0 = SplitMix(ref x); _s1 = SplitMix(ref x); _s2 = SplitMix(ref x); _s3 = SplitMix(ref x);
         }
 
+        /// <summary>Trạng thái nội bộ (4 từ) để lưu/nạp mô phỏng giữa chừng mà vẫn tất định.</summary>
+        public ulong[] State { get { return new[] { _s0, _s1, _s2, _s3 }; } set { _s0 = value[0]; _s1 = value[1]; _s2 = value[2]; _s3 = value[3]; } }
+
         private static ulong SplitMix(ref ulong x)
         {
             ulong z = (x += 0x9E3779B97F4A7C15UL);

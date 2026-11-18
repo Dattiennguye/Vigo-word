@@ -13,7 +13,7 @@ Mã: `src/Vigo.Core/SaveGame.cs` (`SaveGame`, `RewindBuffer`). Test: 3 test "Lư
 Bản lưu ≈ 39 KB, lưu ≈ 7 ms, nạp ≈ 250 ms (chủ yếu là sinh lại thế giới). Nạp rồi chạy tiếp 100 tuần cho trạng thái **giống hệt** chạy liền (kể cả sau chiến tranh, đổi thuế, cấm vận).
 
 ## Hạn chế
-- Chưa lưu `CitySim` (thành phố chi tiết); khi có lớp Unity phải thêm phần này.
+- `CitySim` (thành phố chi tiết) được lưu từ phiên bản 5: `SaveGame.ToBytes(w, eco, war, cities)` với `cities = List<CityEntry>(CityId, CitySim)`; nạp qua `FromBytes(data, out w, out eco, out war, out cities)`; `RewindBuffer.Push/Rewind` cũng nhận/trả danh sách này. Lưu đường, nút, lô đất, công trình, chỉ số, trạng thái RNG; dựng lại chỉ mục không gian và liên thông khi nạp. Địa hình chỉ hỗ trợ `FlatTerrain` và `WorldTerrain` (loại khác → `SaveException` khi lưu). `NationalContext` KHÔNG lưu: `CityLink.Apply` áp lại mỗi tuần. Bản lưu phiên bản cũ (≤4) bị từ chối (chưa có bộ chuyển đổi).
 - Bản lưu phụ thuộc bộ sinh thế giới: đổi thuật toán sinh làm hash gốc lệch → bản cũ bị từ chối (chưa có bộ chuyển đổi phiên bản).
 - Tất định xuyên nền tảng (Windows ↔ Android) chưa kiểm; nếu float/double lệch, `GenesisHash` sẽ từ chối thay vì nạp sai âm thầm.
 - Mốc bộ nhớ cho 40 năm game ≈ 40 × 40 KB: nhỏ, nhưng sẽ lớn hơn khi thêm quân đội, AI, thành phố.

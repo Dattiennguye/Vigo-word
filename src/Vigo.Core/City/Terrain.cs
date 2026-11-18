@@ -28,13 +28,14 @@ namespace Vigo.Core.CityBuilder
     /// </summary>
     public sealed class WorldTerrain : ITerrain
     {
+        public readonly CityId City; public float SizeMeters => _size;
         private readonly float _size; private readonly Noise2D _noise; private readonly float _rough;
         private readonly bool _hasRiver, _hasSea, _hasLake;
         private readonly float _rdx, _rdy, _riverW, _sx, _sy, _lx, _ly;
 
         public WorldTerrain(WorldState w, CityId cityId, float sizeMeters)
         {
-            var city = w.GetCity(cityId); int c = city.Cell; var g = w.Grid; _size = sizeMeters;
+            City = cityId; var city = w.GetCity(cityId); int c = city.Cell; var g = w.Grid; _size = sizeMeters;
             _noise = new Noise2D(w.Seed ^ ((ulong)(uint)c * 0x9E3779B97F4A7C15UL));
             _rough = 0.3f + 3f * w.Slope[c];
 

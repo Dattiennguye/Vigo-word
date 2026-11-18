@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using Vigo.Core.Economy;
 using Vigo.Core.Military;
+using Vigo.Core.CityBuilder;
 
 namespace Vigo.Core
 {
@@ -15,12 +16,12 @@ namespace Vigo.Core
     /// </summary>
     public static class SaveGame
     {
-        public const int Version = 4;
+        public const int Version = 5;
         private const uint Magic = 0x4F474956; // "VIGO"
 
         public sealed class SaveException : Exception { public SaveException(string m) : base(m) { } }
 
-        public static byte[] ToBytes(WorldState w, EconomySim eco, WarSim war = null)
+        public static byte[] ToBytes(WorldState w, EconomySim eco, WarSim war = null, IList<CityEntry> cities = null)
         {
             using (var ms = new MemoryStream())
             {
@@ -28,7 +29,7 @@ namespace Vigo.Core
                 using (var bw = new BinaryWriter(gz))
                 {
                     var body = new MemoryStream(); var b = new BinaryWriter(body);
-                    WriteBody(b, w, eco, war); b.Flush();
+                    WriteBody(b, w, eco, war, cities); b.Flush();
                     var bytes = body.ToArray();
                     bw.Write(Magic); bw.Write(Version); bw.Write(Checksum(bytes)); bw.Write(bytes.Length); bw.Write(bytes);
                 }
@@ -36,18 +37,20 @@ namespace Vigo.Core
             }
         }
 
-        public static void Save(string path, WorldState w, EconomySim eco, WarSim war = null)
+        public static void Save(string path, WorldState w, EconomySim eco, WarSim war = null, IList<CityEntry> cities = null)
         {
-            var tmp = path + ".tmp"; File.WriteAllBytes(tmp, ToBytes(w, eco, war));
+            var tmp = path + ".tmp"; File.WriteAllBytes(tmp, ToBytes(w, eco, war, cities));
             if (File.Exists(path)) File.Delete(path);
             File.Move(tmp, path); // ghi tạm rồi đổi tên: mất điện giữa chừng không làm hỏng bản cũ
         }
 
         public static void Load(string path, out WorldState w, out EconomySim eco) { FromBytes(File.ReadAllBytes(path), out w, out eco, out var _war); }
-        public static void Load(string path, out WorldState w, out EconomySim eco, out WarSim war) { FromBytes(File.ReadAllBytes(path), out w, out eco, out war); }
+        public static void Load(string path, out WorldState w, out EconomySim eco, out WarSim war) { FromBytes(File.ReadAllBytes(path), out w, out eco, out war, out var _c); }
+        public static void Load(string path, out WorldState w, out EconomySim eco, out WarSim war, out List<CityEntry> cities) { FromBytes(File.ReadAllBytes(path), out w, out eco, out war, out cities); }
 
-        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco) { FromBytes(data, out w, out eco, out var _war); }
-        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco, out WarSim war)
+        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco) { FromBytes(data, out w, out eco, out var _war, out var _c); }
+        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco, out WarSim war) { FromBytes(data, out w, out eco, out war, out var _c); }
+        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco, out WarSim war, out List<CityEntry> cities)
         {
             byte[] body;
             try
@@ -64,13 +67,13 @@ namespace Vigo.Core
             }
             catch (InvalidDataException) { throw new SaveException("bản lưu bị hỏng (không giải nén được)"); }
             catch (EndOfStreamException) { throw new SaveException("bản lưu bị cắt cụt"); }
-            ReadBody(new BinaryReader(new MemoryStream(body)), out w, out eco, out war);
+            ReadBody(new BinaryReader(new MemoryStream(body)), out w, out eco, out war, out cities);
         }
 
         private static ulong Checksum(byte[] d) { ulong h = 14695981039346656037UL; unchecked { for (int i = 0; i < d.Length; i++) { h ^= d[i]; h *= 1099511628211UL; } } return h; }
 
         // ---------------- ghi ----------------
-        private static void WriteBody(BinaryWriter b, WorldState w, EconomySim eco, WarSim war)
+        private static void WriteBody(BinaryWriter b, WorldState w, EconomySim eco, WarSim war, IList<CityEntry> cities)
         {
             var c = w.Config;
             b.Write(c.Seed); b.Write(c.MapWidth); b.Write(c.MapHeight); b.Write(c.CellCount); b.Write(c.CountryCount);
@@ -115,13 +118,22 @@ namespace Vigo.Core
                 var hc = war.HumanCountries.OrderBy(v => v).ToList(); b.Write(hc.Count); foreach (int v in hc) b.Write(v);
                 b.Write(war.Events.Count); foreach (var ev in war.Events) { b.Write(ev.Week); b.Write(ev.Kind); b.Write(ev.A); b.Write(ev.B); b.Write(ev.Text); }
             }
+            int nc2 = cities == null ? 0 : cities.Count; b.Write(nc2);
+            for (int i = 0; i < nc2; i++)
+            {
+                var t = cities[i].Sim.Terrain; b.Write(cities[i].Id.Value);
+                if (t is FlatTerrain ft) { b.Write((byte)0); b.Write(ft.WaterX0); b.Write(ft.WaterX1); }
+                else if (t is WorldTerrain wt) { b.Write((byte)1); b.Write(wt.City.Value); b.Write(wt.SizeMeters); }
+                else throw new SaveException("loại địa hình thành phố chưa hỗ trợ lưu: " + t.GetType().Name);
+                cities[i].Sim.WriteState(b);
+            }
         }
 
         private static void Arr(BinaryWriter b, double[] a) { b.Write(a.Length); foreach (double v in a) b.Write(v); }
         private static double[] ArrR(BinaryReader r) { int n = r.ReadInt32(); if (n < 0 || n > 50_000_000) throw new SaveException("độ dài mảng không hợp lệ"); var a = new double[n]; for (int i = 0; i < n; i++) a[i] = r.ReadDouble(); return a; }
 
         // ---------------- đọc ----------------
-        private static void ReadBody(BinaryReader r, out WorldState w, out EconomySim eco, out WarSim war)
+        private static void ReadBody(BinaryReader r, out WorldState w, out EconomySim eco, out WarSim war, out List<CityEntry> cities)
         {
             var c = new WorldConfig
             {
@@ -190,6 +202,17 @@ namespace Vigo.Core
                 int nh = r.ReadInt32(); for (int i = 0; i < nh; i++) war.HumanCountries.Add(r.ReadInt32());
                 int ne = r.ReadInt32(); for (int i = 0; i < ne; i++) war.Events.Add(new GameEvent { Week = r.ReadInt32(), Kind = r.ReadString(), A = r.ReadInt32(), B = r.ReadInt32(), Text = r.ReadString() });
             }
+            cities = new List<CityEntry>();
+            int ncity = r.ReadInt32(); if (ncity < 0 || ncity > 100000) throw new SaveException("số thành phố chi tiết không hợp lệ");
+            for (int i = 0; i < ncity; i++)
+            {
+                var cid = new CityId(r.ReadInt32()); byte kind = r.ReadByte(); ITerrain terr;
+                if (kind == 0) terr = new FlatTerrain { WaterX0 = r.ReadSingle(), WaterX1 = r.ReadSingle() };
+                else if (kind == 1) { var tc = new CityId(r.ReadInt32()); float tsz = r.ReadSingle(); terr = new WorldTerrain(w, tc, tsz); }
+                else throw new SaveException("loại địa hình không biết: " + kind);
+                try { cities.Add(new CityEntry(cid, CitySim.ReadState(r, terr))); }
+                catch (InvalidDataException ex) { throw new SaveException("thành phố chi tiết hỏng: " + ex.Message); }
+            }
         }
     }
 
@@ -199,17 +222,18 @@ namespace Vigo.Core
         private readonly int _capacity; private readonly LinkedList<KeyValuePair<int, byte[]>> _snaps = new LinkedList<KeyValuePair<int, byte[]>>();
         public RewindBuffer(int capacity) { _capacity = Math.Max(1, capacity); }
         public int Count => _snaps.Count;
-        public void Push(WorldState w, EconomySim eco, WarSim war = null) { _snaps.AddLast(new KeyValuePair<int, byte[]>(eco.S.Week, SaveGame.ToBytes(w, eco, war))); while (_snaps.Count > _capacity) _snaps.RemoveFirst(); }
+        public void Push(WorldState w, EconomySim eco, WarSim war = null, IList<CityEntry> cities = null) { _snaps.AddLast(new KeyValuePair<int, byte[]>(eco.S.Week, SaveGame.ToBytes(w, eco, war, cities))); while (_snaps.Count > _capacity) _snaps.RemoveFirst(); }
         public int[] Weeks() { var l = new List<int>(); foreach (var kv in _snaps) l.Add(kv.Key); return l.ToArray(); }
         /// <summary>Quay về mốc gần nhất không muộn hơn tuần yêu cầu; các mốc muộn hơn bị bỏ (nhánh lịch sử mới).</summary>
         public bool Rewind(int week, out WorldState w, out EconomySim eco) { return Rewind(week, out w, out eco, out var _war); }
-        public bool Rewind(int week, out WorldState w, out EconomySim eco, out WarSim war)
+        public bool Rewind(int week, out WorldState w, out EconomySim eco, out WarSim war) { return Rewind(week, out w, out eco, out war, out var _c); }
+        public bool Rewind(int week, out WorldState w, out EconomySim eco, out WarSim war, out List<CityEntry> cities)
         {
-            w = null; eco = null; war = null; var node = _snaps.Last;
+            w = null; eco = null; war = null; cities = null; var node = _snaps.Last;
             while (node != null && node.Value.Key > week) node = node.Previous;
             if (node == null) return false;
             while (_snaps.Last != node) _snaps.RemoveLast();
-            SaveGame.FromBytes(node.Value.Value, out w, out eco, out war); return true;
+            SaveGame.FromBytes(node.Value.Value, out w, out eco, out war, out cities); return true;
         }
     }
 }

@@ -40,7 +40,10 @@ Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất n
 Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,breakTreaties)`, `JoinWar`, `ProposeTerms(winner,loser,cede,reparations)`, `GetOpinion`, `Allies`, `Treaties`. `DiplomacyAI{Treaties=true}`; `SetHuman` cho người chơi. SaveGame phiên bản 3. Hằng số chưa cân bằng theo trải nghiệm chơi.
 
 ## GĐ5 – Nối thành phố với quốc gia (XONG, 66 test pass) — xem docs/PHASE5.md
-`new CityLink(world, eco, war).Apply(citySim, cityId)` trước mỗi `citySim.StepWeek()`; `CitySim.National` (null = độc lập). Một chiều quốc gia → thành phố. SaveGame phiên bản 4 (CapturedWeek). CitySim CHƯA được lưu.
+`new CityLink(world, eco, war).Apply(citySim, cityId)` trước mỗi `citySim.StepWeek()`; `CitySim.National` (null = độc lập). Một chiều quốc gia → thành phố. SaveGame phiên bản 4 (CapturedWeek).
+
+## Lưu CitySim (XONG, 72 test pass) — xem docs/SAVE.md
+`SaveGame.ToBytes(w, eco, war, cities)` (phiên bản 5), `List<CityEntry>`; nạp rồi chạy tiếp y hệt chạy liền (test). Chỉ FlatTerrain/WorldTerrain; bối cảnh quốc gia không lưu.
 
 ## Sau đó
-GĐ6: lưu CitySim trong SaveGame, chiều ngược thành phố → quốc gia, AI đề nghị liên minh tới người chơi, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6 (còn lại): chiều ngược thành phố → quốc gia, AI đề nghị liên minh tới người chơi, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
