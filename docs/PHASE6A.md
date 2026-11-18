@@ -24,3 +24,9 @@ Trước đây AI bỏ qua nước người chơi khi lập liên minh. Giờ AI
 - Không áp lên nước người chơi (cả hai chiều); với người chơi vẫn dùng `ProposePeace`/`ProposeTerms` thủ công.
 - Đo: seed 75, 1500 tuần, 10 lần áp điều kiện (tắt: 0); bất biến thế giới giữ nguyên.
 - Hạn chế: bên thua AI bị áp đặt, không thương lượng; ngưỡng 1,5×/26 tuần/50% là tham số tôi đặt.
+
+## Hiệp ước thương mại (`TreatyType.Trade`)
+- `WarSim.ProposeTrade/AcceptsTrade/HasTrade/TradePartners`; tối đa 4 đối tác mỗi nước, thiện cảm đối phương ≥ 0, hiệu lực 260 tuần, tự hủy khi hai nước có chiến tranh. AI ký với láng giềng thiện cảm ≥ 10 mỗi 26 tuần; gửi đề nghị tới người chơi qua cùng hệ thống `Offers` (loại `Trade`).
+- Tác động thật lên kinh tế: `EconomySim.TradePref[i,j]` (hiệp ước thương mại ×3, liên minh ×2, còn lại ×1) được đặt từ hiệp ước ngay trước mỗi vòng thương mại (`BeforeTrade`). Nó (a) lệch lựa chọn nhà xuất khẩu của người mua, và (b) khi nhà xuất khẩu khan hàng, chia hàng theo yêu cầu × ưu tiên. Hàng hóa vẫn chuyển zero-sum và qua sổ cái.
+- Đo: nhà xuất khẩu khan lương thực, người mua có hiệp ước nhận kho 78486 so với 26763 khi không có (một mức khan hiếm trong test); ở mọi mức khan hiếm đã thử, hiệp ước không làm người mua thiệt.
+- Không có thuế quan/miễn thuế (kinh tế chưa mô hình thuế nhập khẩu); đây là *ưu tiên tiếp cận hàng*, không phải giảm giá. `TradePref` không lưu vì suy ra lại từ hiệp ước (nạp bản lưu cho kết quả y hệt, test).

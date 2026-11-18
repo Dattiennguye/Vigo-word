@@ -25,7 +25,7 @@ namespace Vigo.Core.Military
             int f = from.Value, t = to.Value;
             if (!HumanCountries.Contains(t) || HumanCountries.Contains(f) || HasOffer(f, t, type) || !CanSign(f, t, type)) return false;
             Offers.Add(new Offer { Id = NextOfferId++, Type = type, From = f, To = t, Week = Eco.S.Week, Expire = Eco.S.Week + OfferWeeks });
-            Log("offer", f, t, W.Countries[f].Name + " đề nghị " + (type == TreatyType.Alliance ? "liên minh" : "hiệp ước không xâm lược") + " với " + W.Countries[t].Name);
+            Log("offer", f, t, W.Countries[f].Name + " đề nghị " + (type == TreatyType.Alliance ? "liên minh" : type == TreatyType.Trade ? "hiệp ước thương mại" : "hiệp ước không xâm lược") + " với " + W.Countries[t].Name);
             return true;
         }
 
@@ -39,6 +39,7 @@ namespace Vigo.Core.Military
                 foreach (int z in Allies(b)) if (AtWar(a, z)) return false;
                 return true;
             }
+            if (type == TreatyType.Trade) return !HasTrade(a, b) && TradePartners(a).Count < MaxTradePartners && TradePartners(b).Count < MaxTradePartners;
             return !HasPact(a, b) && !Allied(a, b);
         }
 
@@ -48,9 +49,9 @@ namespace Vigo.Core.Military
             var o = Offers.FirstOrDefault(x => x.Id == offerId); if (o == null) return false;
             Offers.Remove(o);
             if (!CanSign(o.From, o.To, o.Type)) return false;
-            Treaties.Add(new Treaty { Type = o.Type, A = o.From, B = o.To, StartWeek = Eco.S.Week, Expire = o.Type == TreatyType.Alliance ? -1 : Eco.S.Week + PactWeeks });
-            AdjustOpinion(o.From, o.To, o.Type == TreatyType.Alliance ? 20 : 8);
-            Log(o.Type == TreatyType.Alliance ? "alliance" : "pact", o.From, o.To, W.Countries[o.From].Name + " và " + W.Countries[o.To].Name + (o.Type == TreatyType.Alliance ? " lập liên minh" : " ký hiệp ước không xâm lược"));
+            Treaties.Add(new Treaty { Type = o.Type, A = o.From, B = o.To, StartWeek = Eco.S.Week, Expire = o.Type == TreatyType.Alliance ? -1 : Eco.S.Week + (o.Type == TreatyType.Trade ? TradeWeeks : PactWeeks) });
+            AdjustOpinion(o.From, o.To, o.Type == TreatyType.Alliance ? 20 : o.Type == TreatyType.Trade ? 5 : 8);
+            Log(o.Type == TreatyType.Alliance ? "alliance" : o.Type == TreatyType.Trade ? "trade" : "pact", o.From, o.To, W.Countries[o.From].Name + " và " + W.Countries[o.To].Name + (o.Type == TreatyType.Alliance ? " lập liên minh" : o.Type == TreatyType.Trade ? " ký hiệp ước thương mại" : " ký hiệp ước không xâm lược"));
             return true;
         }
 

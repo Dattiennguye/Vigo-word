@@ -17,7 +17,11 @@ namespace Vigo.Core.Economy
 
         /// <summary>Ảnh hưởng ngược từ thành phố chi tiết (CityLink.Report): hệ số năng suất lao động theo tỉnh (1 = không đổi) và cộng thêm vào tốc độ tăng dân/tuần. Đặt lại mỗi tuần, không lưu.</summary>
         public double[] CityLabourMod, CityGrowthAdj;
-        private void InitCityHooks() { int n = W.Provinces.Count; CityLabourMod = new double[n]; CityGrowthAdj = new double[n]; for (int i = 0; i < n; i++) CityLabourMod[i] = 1; }
+        /// <summary>Ưu tiên mua của i từ j trong thương mại (1 = bình thường); WarSim đặt từ hiệp ước mỗi 4 tuần. Không lưu (suy ra từ hiệp ước).</summary>
+        public double[,] TradePref;
+        /// <summary>WarSim đặt hàm này để ưu tiên thương mại luôn lấy từ hiệp ước hiện có ngay lúc giao thương.</summary>
+        public Action BeforeTrade;
+        private void InitCityHooks() { int n = W.Provinces.Count; CityLabourMod = new double[n]; CityGrowthAdj = new double[n]; int nc = W.Countries.Count; TradePref = new double[nc, nc]; for (int a = 0; a < nc; a++) for (int b = 0; b < nc; b++) TradePref[a, b] = 1; for (int i = 0; i < n; i++) CityLabourMod[i] = 1; }
         public EconomySim(WorldState w) { W = w; _seed = w.Seed; S = EconomyInit.Create(w); InitCityHooks(); }
         /// <summary>Dùng khi nạp bản lưu.</summary>
         public EconomySim(WorldState w, EconomyState state) { W = w; _seed = w.Seed; S = state; InitCityHooks(); }
@@ -349,6 +353,7 @@ namespace Vigo.Core.Economy
         public void RunTradeOnly() { Trade(); }
         private void Trade()
         {
+            BeforeTrade?.Invoke();
             int NC = W.Countries.Count, G = EconData.GoodCount;
             var budget = new double[NC]; var dem = new double[NC][];
             for (int c = 0; c < NC; c++) { if (S.Dead[c]) continue; budget[c] = Math.Max(0, S.Treasury[c] + CreditLimit(c)) * 0.5; dem[c] = Demand(c); }
@@ -373,17 +378,19 @@ namespace Vigo.Core.Economy
                 for (int i = 0; i < NC; i++)
                 {
                     if (imp[i] <= 1e-12) continue;
-                    double avail = 0; for (int j = 0; j < NC; j++) if (exp[j] > 0 && !Blocked(i, j)) avail += exp[j];
+                    double avail = 0; for (int j = 0; j < NC; j++) if (exp[j] > 0 && !Blocked(i, j)) avail += exp[j] * TradePref[i, j];
                     if (avail <= 1e-12) continue;
-                    for (int j = 0; j < NC; j++) if (exp[j] > 0 && !Blocked(i, j)) { x[i, j] = imp[i] * exp[j] / avail; colSum[j] += x[i, j]; }
+                    for (int j = 0; j < NC; j++) if (exp[j] > 0 && !Blocked(i, j)) { x[i, j] = imp[i] * exp[j] * TradePref[i, j] / avail; colSum[j] += x[i, j]; }
                 }
                 for (int j = 0; j < NC; j++)
                 {
-                    double f = colSum[j] > exp[j] ? exp[j] / colSum[j] : 1;
                     if (colSum[j] <= 0) continue;
+                    bool scarce = colSum[j] > exp[j]; double ws = 0;
+                    if (scarce) for (int i = 0; i < NC; i++) ws += x[i, j] * TradePref[i, j];
                     for (int i = 0; i < NC; i++)
                     {
-                        double q = x[i, j] * f; if (q <= 1e-12) continue;
+                        // khan hiếm: nhà xuất khẩu chia theo yêu cầu × ưu tiên (đối tác hiệp ước được phần lớn hơn), không bán quá yêu cầu
+                        double q = scarce ? Math.Min(x[i, j], exp[j] * x[i, j] * TradePref[i, j] / ws) : x[i, j]; if (q <= 1e-12) continue;
                         double pay = q * pw;
                         S.Stock[j][g] -= q; S.Stock[i][g] += q;
                         S.Treasury[i] -= pay; S.Treasury[j] += pay; budget[i] -= pay;

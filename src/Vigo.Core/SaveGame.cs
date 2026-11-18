@@ -204,6 +204,7 @@ namespace Vigo.Core
                 war.NextOfferId = r.ReadInt32(); int nof = r.ReadInt32(); if (nof < 0 || nof > 100000) throw new SaveException("số đề nghị không hợp lệ"); for (int i = 0; i < nof; i++) war.Offers.Add(new Offer { Id = r.ReadInt32(), Type = (TreatyType)r.ReadByte(), From = r.ReadInt32(), To = r.ReadInt32(), Week = r.ReadInt32(), Expire = r.ReadInt32() });
                 int ne = r.ReadInt32(); for (int i = 0; i < ne; i++) war.Events.Add(new GameEvent { Week = r.ReadInt32(), Kind = r.ReadString(), A = r.ReadInt32(), B = r.ReadInt32(), Text = r.ReadString() });
             }
+            if (war != null) war.RefreshTradePref();
             cities = new List<CityEntry>();
             int ncity = r.ReadInt32(); if (ncity < 0 || ncity > 100000) throw new SaveException("số thành phố chi tiết không hợp lệ");
             for (int i = 0; i < ncity; i++)

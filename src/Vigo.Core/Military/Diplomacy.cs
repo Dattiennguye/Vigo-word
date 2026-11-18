@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Vigo.Core.Military
 {
-    public enum TreatyType : byte { Alliance, NonAggression }
+    public enum TreatyType : byte { Alliance, NonAggression, Trade }
 
     public sealed class Treaty
     {
@@ -41,6 +41,8 @@ namespace Vigo.Core.Military
 
         public bool Allied(int a, int b) => Treaties.Any(t => t.Type == TreatyType.Alliance && ((t.A == a && t.B == b) || (t.A == b && t.B == a)));
         public bool HasPact(int a, int b) => Treaties.Any(t => t.Type == TreatyType.NonAggression && ((t.A == a && t.B == b) || (t.A == b && t.B == a)));
+        public bool HasTrade(int a, int b) => Treaties.Any(t => t.Type == TreatyType.Trade && ((t.A == a && t.B == b) || (t.A == b && t.B == a)));
+        public List<int> TradePartners(int c) { var l = new List<int>(); foreach (var t in Treaties) if (t.Type == TreatyType.Trade) { if (t.A == c) l.Add(t.B); else if (t.B == c) l.Add(t.A); } return l; }
         public List<int> Allies(int c) { var l = new List<int>(); foreach (var t in Treaties) if (t.Type == TreatyType.Alliance) { if (t.A == c) l.Add(t.B); else if (t.B == c) l.Add(t.A); } return l; }
         private void RemoveTreaties(int a, int b) { Treaties.RemoveAll(t => (t.A == a && t.B == b) || (t.A == b && t.B == a)); }
 
@@ -81,6 +83,20 @@ namespace Vigo.Core.Military
             int f = from.Value, t = to.Value; if (!AcceptsAlliance(t, f)) return false;
             Treaties.Add(new Treaty { Type = TreatyType.Alliance, A = f, B = t, StartWeek = Eco.S.Week, Expire = -1 });
             AdjustOpinion(f, t, 20); Log("alliance", f, t, W.Countries[f].Name + " và " + W.Countries[t].Name + " lập liên minh"); return true;
+        }
+
+        public const int TradeWeeks = 260, MaxTradePartners = 4;
+        public bool AcceptsTrade(int ai, int from)
+        {
+            if (ai == from || W.Countries[ai].Eliminated || W.Countries[from].Eliminated || HasTrade(ai, from) || AtWar(ai, from)) return false;
+            return GetOpinion(ai, from) >= 0 && TradePartners(ai).Count < MaxTradePartners;
+        }
+        /// <summary>Hiệp ước thương mại: hai nước ưu tiên bán cho nhau khi hàng khan hiếm (xem EconomySim.TradePref). Không phải miễn thuế; hết hạn sau 260 tuần hoặc khi có chiến tranh.</summary>
+        public bool ProposeTrade(CountryId from, CountryId to)
+        {
+            int f = from.Value, t = to.Value; if (!AcceptsTrade(t, f) || TradePartners(f).Count >= MaxTradePartners) return false;
+            Treaties.Add(new Treaty { Type = TreatyType.Trade, A = f, B = t, StartWeek = Eco.S.Week, Expire = Eco.S.Week + TradeWeeks });
+            AdjustOpinion(f, t, 5); Log("trade", f, t, W.Countries[f].Name + " và " + W.Countries[t].Name + " ký hiệp ước thương mại"); return true;
         }
 
         public bool ProposePact(CountryId from, CountryId to)
@@ -152,12 +168,22 @@ namespace Vigo.Core.Military
             MakePeace(winner, loser); return true;
         }
 
+        /// <summary>Đặt lại ưu tiên thương mại của kinh tế từ hiệp ước hiện có (gọi mỗi tuần và sau khi nạp bản lưu).</summary>
+        public void RefreshTradePref()
+        {
+            int NC = W.Countries.Count; var pref = Eco.TradePref; for (int i = 0; i < NC; i++) for (int j = 0; j < NC; j++) pref[i, j] = 1;
+            foreach (var t in Treaties) { double m = t.Type == TreatyType.Trade ? 3 : t.Type == TreatyType.Alliance ? 2 : 1; if (m > pref[t.A, t.B]) { pref[t.A, t.B] = m; pref[t.B, t.A] = m; } }
+        }
+
         // ---------- Vòng tuần của ngoại giao ----------
         private void DiplomacyStep()
         {
             int NC = W.Countries.Count; var S = Eco.S;
             for (int i = 0; i < NC; i++) for (int j = 0; j < NC; j++) Delta[i, j] *= 0.995;
             Treaties.RemoveAll(t => (t.Expire >= 0 && S.Week >= t.Expire) || W.Countries[t.A].Eliminated || W.Countries[t.B].Eliminated);
+            Treaties.RemoveAll(t => t.Type == TreatyType.Trade && AtWar(t.A, t.B));
+            // ưu tiên thương mại của nền kinh tế: hiệp ước thương mại ×3, liên minh ×2
+RefreshTradePref();
             if (S.Week % 4 != 0) return;
             // láng giềng hòa bình quen biết lâu dần thân thiện (trừ khi đối phương hiếu chiến); cân bằng ≈ +25 nhờ phân rã
             foreach (var c in W.Countries)

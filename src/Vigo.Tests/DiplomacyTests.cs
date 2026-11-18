@@ -165,6 +165,48 @@ namespace Vigo.Tests
                 assert(off == 0, "tắt Terms mà vẫn có điều kiện hòa đàm (từ nguồn khác?)");
                 assert(hl == 0, "AI áp điều kiện hòa đàm lên nước người chơi");
             });
+
+            add("Hiệp ước thương mại: cần thiện cảm ≥ 0, tối đa 4 đối tác, tan khi có chiến tranh; đối tác được ưu tiên khi hàng khan hiếm", () =>
+            {
+                var (w, e, war) = Make(76); var (a, b) = MilitaryTests.Pair(w); int x = a.Id.Value, y = b.Id.Value;
+                war.Delta[y, x] = -100; assert(!war.ProposeTrade(a.Id, b.Id), "thiện cảm thấp mà vẫn ký thương mại");
+                war.Delta[y, x] = 100; assert(war.ProposeTrade(a.Id, b.Id) && war.HasTrade(x, y) && war.HasTrade(y, x), "không ký được/không đối xứng");
+                assert(!war.ProposeTrade(a.Id, b.Id), "ký hai lần");
+                war.StepWeek(); e.StepWeek(); war.StepWeek();
+                assert(e.TradePref[x, y] >= 3 && e.TradePref[y, x] >= 3, "ưu tiên thương mại chưa được áp: " + e.TradePref[x, y]);
+                assert(war.DeclareWar(a.Id, b.Id, true), "không tuyên chiến được"); war.StepWeek(); e.StepWeek(); war.StepWeek(); war.StepWeek(); war.StepWeek();
+                assert(!war.HasTrade(x, y), "chiến tranh mà hiệp ước thương mại vẫn còn");
+                // trần 4 đối tác
+                var (w2, e2, war2) = Make(76); var c = w2.Countries[0]; int made = 0;
+                foreach (var o in w2.Countries.Skip(1).Take(8)) { war2.Delta[o.Id.Value, 0] = 100; war2.Delta[0, o.Id.Value] = 100; if (war2.ProposeTrade(c.Id, o.Id)) made++; }
+                assert(made == WarSim.MaxTradePartners && war2.TradePartners(0).Count == WarSim.MaxTradePartners, "vượt trần đối tác: " + made);
+            });
+
+            add("Hiệp ước thương mại: khi lương thực khan hiếm, nước có hiệp ước với nhà xuất khẩu nhận nhiều hơn khi không có hiệp ước", () =>
+            {
+                double Run(bool treaty, double scale, out double rival)
+                {
+                    var w = Gen(77); var e = new EconomySim(w); var war = new WarSim(w, e);
+                    var ordered = w.Countries.OrderByDescending(c => e.S.Stock[c.Id.Value][0]).ToList();
+                    var exporter = ordered[0]; var buyer = ordered[ordered.Count - 1]; var rivalC = ordered[ordered.Count - 2];
+                    int pi = exporter.Id.Value, bi = buyer.Id.Value, ri = rivalC.Id.Value;
+                    foreach (var c in w.Countries) if (c.Id.Value != pi) e.S.Stock[c.Id.Value][0] = 0;
+                    e.S.Stock[pi][0] *= scale; foreach (var c in w.Countries) e.S.Treasury[c.Id.Value] = Math.Max(e.S.Treasury[c.Id.Value], 1e9);
+                    if (treaty) { war.Delta[pi, bi] = 100; war.Delta[bi, pi] = 100; assert(war.ProposeTrade(buyer.Id, exporter.Id), "không ký được"); }
+                    war.RefreshTradePref(); e.RunTradeOnly();
+                    rival = e.S.Stock[ri][0]; return e.S.Stock[bi][0];
+                }
+                // mức khan hiếm phụ thuộc kho nhà xuất khẩu: thử nhiều mức, hiệp ước không được làm người mua thiệt ở mức nào và phải có lợi ở ít nhất một mức khan hiếm
+                bool gain = false; double lastW = 0, lastWo = 0;
+                foreach (double sc in new[] { 0.8, 1.0, 1.2, 1.5, 2.0, 3.0 })
+                {
+                    double with = Run(true, sc, out double rw), without = Run(false, sc, out double rwo);
+                    assert(with >= without - 1e-9 * Math.Max(1, without), "hiệp ước làm người mua nhận ít hơn ở mức " + sc + ": " + with + " vs " + without);
+                    if (with > without * 1.001 + 1) { gain = true; lastW = with; lastWo = without; }
+                }
+                Console.Write($" [có lợi rõ ở ít nhất một mức khan hiếm: {gain}; ví dụ kho người mua {lastW:0} vs {lastWo:0}]");
+                assert(gain, "hiệp ước thương mại không giúp người mua ở bất kỳ mức khan hiếm nào");
+            });
         }
     }
 }

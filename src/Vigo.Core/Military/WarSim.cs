@@ -45,7 +45,7 @@ namespace Vigo.Core.Military
 
         public WarSim(WorldState w, EconomySim eco)
         {
-            W = w; Eco = eco; int NP = w.Provinces.Count, NC = w.Countries.Count;
+            W = w; Eco = eco; eco.BeforeTrade = RefreshTradePref; int NP = w.Provinces.Count, NC = w.Countries.Count;
             Progress = new double[NP]; ProgressBy = new int[NP]; CapturedWeek = new int[NP]; for (int i = 0; i < NP; i++) CapturedWeek[i] = -1; for (int i = 0; i < NP; i++) ProgressBy[i] = -1;
             Supply = new double[NC]; for (int i = 0; i < NC; i++) Supply[i] = 1;
             ProvNeighbors = new List<int>[NP]; for (int i = 0; i < NP; i++) ProvNeighbors[i] = new List<int>();

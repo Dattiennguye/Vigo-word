@@ -84,6 +84,7 @@ namespace Vigo.Core.Military
                     if (op >= 30 && _war.Allies(i).Count < 3 && _war.SendOffer(c.Id, hc.Id, TreatyType.Alliance)) continue;
                     bool scared = _war.Power(h) > 1.5 * _war.Power(i);
                     if ((scared || op >= 10) && op > -10) _war.SendOffer(c.Id, hc.Id, TreatyType.NonAggression);
+                    if (op >= 10) _war.SendOffer(c.Id, hc.Id, TreatyType.Trade);
                 }
             }
         }
@@ -106,6 +107,12 @@ namespace Vigo.Core.Military
                     if (agg && _war.Power(j) > 1.5 * _war.Power(i) && _war.ProposePact(c.Id, n.Id)) break;
                 }
                 // 2) liên minh với láng giềng mến nhất (chia sẻ mối đe dọa càng tốt)
+                // 2b) hiệp ước thương mại với láng giềng mến (thiện cảm ≥ 10)
+                foreach (var nid in c.Neighbors)
+                {
+                    var n = W.GetCountry(nid); int j = n.Id.Value; if (n.Eliminated || _human.Contains(j) || _war.AtWar(i, j) || _war.HasTrade(i, j)) continue;
+                    if (_war.GetOpinion(i, j) >= 10 && _war.ProposeTrade(c.Id, n.Id)) break;
+                }
                 if (_war.Allies(i).Count >= 2) continue;
                 Country best = null; double bestScore = 0;
                 foreach (var nid in c.Neighbors)
