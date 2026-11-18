@@ -51,5 +51,8 @@ Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,bre
 ## GĐ6a – AI đề nghị liên minh/hiệp ước tới người chơi (XONG, 77 test pass) — xem docs/PHASE6A.md
 `war.OffersFor(h)`, `AcceptOffer/DeclineOffer(id)`; AI gửi qua `DiplomacyAI` mỗi 26 tuần. SaveGame phiên bản 6. `DiplomacyAI.Terms`: AI thắng thế tự áp điều kiện hòa đàm. Hiệp ước thương mại (`ProposeTrade`, `TradePref` trong kinh tế) — 80 test.
 
+## GameSession – lớp lệnh/vòng lặp thống nhất (XONG, 84 test pass) — xem docs/SESSION.md
+`GameSession.New/Load`, `StepWeek`, lệnh người chơi, `Status()`, `Save/Rewind`. Unity chỉ cần gọi lớp này.
+
 ## Sau đó
-GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, hải quân; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, hải quân; lệnh chỉ huy chiến dịch; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
