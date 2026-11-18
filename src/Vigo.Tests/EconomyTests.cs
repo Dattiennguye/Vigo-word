@@ -146,6 +146,59 @@ namespace Vigo.Tests
                 foreach (var c in w.Countries.Where(x => !x.Eliminated)) assert(c.Capital != CityId.None && w.GetProvince(c.CapitalProvince).Owner == c.Id, c.Name + " thủ đô ngoài lãnh thổ");
             });
 
+
+            add("Lưu/nạp: nạp rồi chạy tiếp cho kết quả giống hệt chạy liền (sau chiến tranh, thuế, cấm vận)", () =>
+            {
+                var w = Gen(21); var e = new EconomySim(w); Run(e, 100);
+                var a = w.Countries[0]; var b = w.Countries[a.Neighbors[0].Value];
+                WorldOps.TransferProvince(w, a.Provinces.First(p => p != a.CapitalProvince), b.Id);
+                e.SetTaxRate(b.Id, 0.4); e.SetTradeBlock(a.Id, b.Id, true); e.SetInvestWeights(a.Id, new double[] { 1, 0, 0, 2, 1, 1, 1 });
+                Run(e, 30);
+                var sw = System.Diagnostics.Stopwatch.StartNew(); var bytes = SaveGame.ToBytes(w, e); long tSave = sw.ElapsedMilliseconds;
+                sw.Restart(); SaveGame.FromBytes(bytes, out var w2, out var e2); long tLoad = sw.ElapsedMilliseconds;
+                Run(e, 100); Run(e2, 100);
+                assert(Sig(e) == Sig(e2), "trạng thái sau khi nạp khác chạy liền");
+                for (int i = 0; i < w.Provinces.Count; i++) assert(w.Provinces[i].Owner == w2.Provinces[i].Owner && w.Provinces[i].Population == w2.Provinces[i].Population, "tỉnh " + i);
+                for (int i = 0; i < w.Countries.Count; i++) assert(w.Countries[i].Population == w2.Countries[i].Population && w.Countries[i].Capital == w2.Countries[i].Capital, "quốc gia " + i);
+                assert(WorldHash.Compute(w) == WorldHash.Compute(w2), "hash thế giới khác");
+                assert(e2.AuditGoods() < 1e-9, "sổ cái sau nạp");
+                Console.Write($" [bản lưu {bytes.Length / 1024} KB, lưu {tSave} ms, nạp {tLoad} ms]");
+            });
+
+            add("Lưu/nạp: từ chối bản hỏng, cắt cụt, rác, rỗng; ghi file an toàn", () =>
+            {
+                var w = Gen(22); var e = new EconomySim(w); Run(e, 20); var good = SaveGame.ToBytes(w, e);
+                void MustFail(byte[] d, string what) { try { SaveGame.FromBytes(d, out var _w, out var _e); } catch (SaveGame.SaveException) { return; } catch (Exception ex) { throw new Exception(what + ": ném sai kiểu ngoại lệ " + ex.GetType().Name); } throw new Exception(what + ": không bị từ chối"); }
+                MustFail(good.Take(good.Length / 2).ToArray(), "cắt cụt");
+                MustFail(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, "rác");
+                MustFail(new byte[0], "rỗng");
+                var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "vigo_test_" + Guid.NewGuid().ToString("N") + ".sav");
+                try
+                {
+                    SaveGame.Save(path, w, e); SaveGame.Save(path, w, e); // ghi đè
+                    assert(!System.IO.File.Exists(path + ".tmp"), "file tạm còn sót");
+                    SaveGame.Load(path, out var w3, out var e3); assert(Sig(e3) == Sig(e), "nạp từ file khác bộ nhớ");
+                }
+                finally { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); }
+            });
+
+            add("Quay lại: chọn sai (đóng thuế 80%, cấm vận, phá hoại) → quay về mốc cũ, nhánh mới tách khỏi nhánh sai", () =>
+            {
+                var w = Gen(23); var e = new EconomySim(w); var buf = new RewindBuffer(5);
+                buf.Push(w, e); Run(e, 52); buf.Push(w, e); double sig52 = Sig(e); Run(e, 52); buf.Push(w, e);
+                // Lựa chọn sai lầm
+                foreach (var c in w.Countries) e.SetTaxRate(c.Id, 0.8);
+                foreach (var p in w.Countries[0].Provinces) e.DamageProvince(p, 0.8);
+                Run(e, 52); double bad = Sig(e);
+                assert(buf.Weeks().SequenceEqual(new[] { 0, 52, 104 }), "các mốc: " + string.Join(",", buf.Weeks()));
+                assert(buf.Rewind(60, out var w2, out var e2), "không quay lại được");
+                assert(e2.S.Week == 52 && Sig(e2) == sig52, "trạng thái quay lại không khớp mốc tuần 52");
+                assert(buf.Weeks().SequenceEqual(new[] { 0, 52 }), "mốc muộn hơn phải bị bỏ");
+                Run(e2, 104); assert(Sig(e2) != bad, "nhánh mới phải khác nhánh sai");
+                assert(!buf.Rewind(-1, out var _w, out var _e), "không có mốc trước tuần 0");
+                var small = new RewindBuffer(2); small.Push(w2, e2); small.Push(w2, e2); small.Push(w2, e2); assert(small.Count == 2, "vòng đệm phải giới hạn dung lượng");
+            });
+
             add("Kinh tế: 40 năm × 5 seed — không nước nào đói triền miên ở điều kiện mặc định", () =>
             {
                 foreach (ulong sd in new ulong[] { 1, 2, 3, 4, 5 })

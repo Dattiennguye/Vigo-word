@@ -39,6 +39,8 @@ namespace Vigo.Core
         public WorldConfig Config;
         public ulong Seed;
         public int Attempt;
+        /// <summary>Hash của thế giới ngay sau khi sinh (trước mọi thay đổi) — bản lưu dùng để kiểm tra khớp.</summary>
+        public ulong GenesisHash;
         public CellGrid Grid;
         public int CellCount => Grid.Count;
 

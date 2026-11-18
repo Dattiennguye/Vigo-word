@@ -16,6 +16,8 @@ namespace Vigo.Core.Economy
         private const double TargetCoverFood = 6, TargetCover = 4;
 
         public EconomySim(WorldState w) { W = w; _seed = w.Seed; S = EconomyInit.Create(w); }
+        /// <summary>Dùng khi nạp bản lưu.</summary>
+        public EconomySim(WorldState w, EconomyState state) { W = w; _seed = w.Seed; S = state; }
 
         // ================= Lệnh (lớp Command sẽ gọi các hàm này ở GĐ sau) =================
         public void SetTaxRate(CountryId c, double rate) { S.TaxRate[c.Value] = Math.Max(0, Math.Min(0.8, rate)); }

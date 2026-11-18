@@ -43,6 +43,7 @@ namespace Vigo.Core
             P("Đường", 0.94f); RoadGen.Generate(w, attempt);
             P("Kiểm tra", 0.99f);
             w.Validation = Validator.Validate(w);
+            w.GenesisHash = WorldHash.Compute(w);
             P("Xong", 1f);
             return w;
         }

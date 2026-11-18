@@ -24,5 +24,8 @@ Mã: src/Vigo.Core/Economy/*, Data/WorldOps.cs (TransferProvince, Country.Elimin
 API: `new EconomySim(world)`, `StepWeek()`, `SetTaxRate`, `SetBudget`, `SetInvestWeights`, `SetTradeBlock`, `DamageProvince`, `AuditGoods()`, `S.Indicators[c]` (FoodSat, FuelSat, GoodsSat, Edu, Health, ValueAdded...).
 Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất nợ chồng chất); hằng số chưa hiệu chỉnh thực tế.
 
+## Lưu/nạp/quay lại (XONG, 37 test pass) — xem docs/SAVE.md
+`SaveGame.ToBytes/FromBytes/Save/Load(world, eco)`, `RewindBuffer(n).Push/Rewind(week)`. Chưa lưu CitySim.
+
 ## Sau đó
 GĐ4: AI quốc gia (ngân sách, mở rộng, ngoại giao), quân sự, chiến tranh dùng TransferProvince; nối QoL thành phố ↔ kinh tế quốc gia; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
