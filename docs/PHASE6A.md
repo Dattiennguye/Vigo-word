@@ -30,3 +30,11 @@ Trước đây AI bỏ qua nước người chơi khi lập liên minh. Giờ AI
 - Tác động thật lên kinh tế: `EconomySim.TradePref[i,j]` (hiệp ước thương mại ×3, liên minh ×2, còn lại ×1) được đặt từ hiệp ước ngay trước mỗi vòng thương mại (`BeforeTrade`). Nó (a) lệch lựa chọn nhà xuất khẩu của người mua, và (b) khi nhà xuất khẩu khan hàng, chia hàng theo yêu cầu × ưu tiên. Hàng hóa vẫn chuyển zero-sum và qua sổ cái.
 - Đo: nhà xuất khẩu khan lương thực, người mua có hiệp ước nhận kho 78486 so với 26763 khi không có (một mức khan hiếm trong test); ở mọi mức khan hiếm đã thử, hiệp ước không làm người mua thiệt.
 - Không có thuế quan/miễn thuế (kinh tế chưa mô hình thuế nhập khẩu); đây là *ưu tiên tiếp cận hàng*, không phải giảm giá. `TradePref` không lưu vì suy ra lại từ hiệp ước (nạp bản lưu cho kết quả y hệt, test).
+
+## Hải quân / đổ bộ (đường biển)
+- **Phát hiện khi đo**: trong các thế giới sinh ra không có nước nào bị cô lập hoàn toàn (đều có láng giềng đất liền), nên hải quân chỉ thêm khoảng 0–6 cặp nước kề biển mỗi thế giới (lệnh `--seadiag N` của CLI). Đây là mở rộng chiến trường chứ không phải sửa lỗ hổng lớn.
+- `WarSim.SeaLinks[p]`: liên kết giữa tỉnh ven biển cách nhau ≤ 6 khoảng cách ô (hình học tĩnh, đối xứng); `SeaNeighbors(c)`/`SeaAdjacent(a,b)`: nước kề biển theo chủ sở hữu hiện tại, không tính láng giềng đất liền.
+- Luật: tuyên chiến qua biển khi cả hai kề biển **và bên tấn công có cảng** (`Country.HasPort`). Tiền tuyến đổ bộ: tấn công ×0,5 (`AmphibiousAttack`), phòng thủ ×1,25 (`CoastalDefense`). Tỉnh có cả đường bộ lẫn biển tính là mặt trận đất liền. Tàn phá chiến tranh tính cả mặt trận biển.
+- AI hiếu chiến có cảng chỉ đánh qua biển khi áp đảo ≥ 3× (đường bộ vẫn ≥ 1,8×).
+- Không có hạm đội riêng (quân số dùng chung với lục quân), chưa có phong tỏa/đánh chìm thương thuyền; hằng số 6/0,5/1,25/3× là tham số tôi đặt, chưa hiệu chỉnh.
+- Test: liên kết đối xứng, điều kiện tuyên chiến (cảng, kề biển), áp đảo thì đổ bộ chiếm được tỉnh (15 → 14 tỉnh trong thử nghiệm), ngang sức 60 tuần không chiếm được.

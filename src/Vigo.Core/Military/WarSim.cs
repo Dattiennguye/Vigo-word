@@ -38,6 +38,9 @@ namespace Vigo.Core.Military
         public int[] CapturedWeek;
         public double[] Supply;                              // hệ số hậu cần 0..1 tuần gần nhất
         public readonly List<int>[] ProvNeighbors; private readonly double[] _terrain;
+        /// <summary>Liên kết đường biển giữa các tỉnh ven biển cách nhau ≤ SeaRange × khoảng cách ô (hình học tĩnh, không phải láng giềng đất liền).</summary>
+        public readonly List<int>[] SeaLinks;
+        public const double SeaRange = 6.0, AmphibiousAttack = 0.5, CoastalDefense = 1.25;
 
         public const double TroopWeeklyCost = 4.0;   // tiền/tuần/lính
         public const double MaxArmyShare = 0.12;
@@ -55,6 +58,7 @@ namespace Vigo.Core.Military
                 int a = w.ProvinceOfCell[c]; if (a < 0) continue;
                 foreach (int nb in w.Grid.Neighbors(c)) { int b = w.ProvinceOfCell[nb]; if (b < 0 || b == a) continue; if (seen.Add((long)a * 100000 + b)) ProvNeighbors[a].Add(b); }
             }
+            SeaLinks = BuildSeaLinks(w);
             InitDiplomacy();
             _terrain = new double[NP];
             for (int p = 0; p < NP; p++)
@@ -63,6 +67,46 @@ namespace Vigo.Core.Military
                 _terrain[p] = 1 + 0.5 * high / Math.Max(1, w.Provinces[p].Cells.Length);
             }
         }
+
+        private static List<int>[] BuildSeaLinks(WorldState w)
+        {
+            int NP = w.Provinces.Count; var links = new List<int>[NP]; for (int i = 0; i < NP; i++) links[i] = new List<int>();
+            var coast = new List<int>();
+            for (int c = 0; c < w.CellCount; c++)
+            {
+                if (!w.IsLand[c] || w.ProvinceOfCell[c] < 0) continue;
+                foreach (int nb in w.Grid.Neighbors(c)) if (w.IsOcean[nb]) { coast.Add(c); break; }
+            }
+            double R = SeaRange * w.Grid.Spacing, R2 = R * R; var bucket = new Dictionary<long, List<int>>();
+            Func<float, long> bk = v => (long)Math.Floor(v / R);
+            foreach (int c in coast) { long k = bk(w.Grid.X[c]) * 100003L + bk(w.Grid.Y[c]); if (!bucket.TryGetValue(k, out var l)) bucket[k] = l = new List<int>(); l.Add(c); }
+            var seen = new HashSet<long>();
+            foreach (int c in coast)
+            {
+                int a = w.ProvinceOfCell[c]; long bx = bk(w.Grid.X[c]), by = bk(w.Grid.Y[c]);
+                for (long dx = -1; dx <= 1; dx++) for (long dy = -1; dy <= 1; dy++)
+                {
+                    if (!bucket.TryGetValue((bx + dx) * 100003L + (by + dy), out var l)) continue;
+                    foreach (int d in l)
+                    {
+                        int b = w.ProvinceOfCell[d]; if (b == a) continue;
+                        double ddx = w.Grid.X[c] - w.Grid.X[d], ddy = w.Grid.Y[c] - w.Grid.Y[d]; if (ddx * ddx + ddy * ddy > R2) continue;
+                        if (seen.Add((long)a * 100000 + b)) links[a].Add(b);
+                    }
+                }
+            }
+            // láng giềng đất liền đã có đường bộ: bỏ khỏi liên kết biển
+            return links;
+        }
+
+        /// <summary>Nước có đường biển tới nước khác qua tỉnh ven biển (chủ sở hữu hiện tại), không tính láng giềng đất liền.</summary>
+        public List<int> SeaNeighbors(int c)
+        {
+            var set = new SortedSet<int>(); var land = W.Countries[c].Neighbors;
+            foreach (var pid in W.Countries[c].Provinces) foreach (int q in SeaLinks[pid.Value]) { int o = W.Provinces[q].Owner.Value; if (o != c && !land.Contains(new CountryId(o))) set.Add(o); }
+            return set.ToList();
+        }
+        public bool SeaAdjacent(int a, int b) => SeaNeighbors(a).Contains(b);
 
         private static long Key(int a, int b) => a < b ? a * 10000L + b : b * 10000L + a;
         public bool AtWar(int a, int b) => Wars.Any(x => (x.A == a && x.B == b) || (x.A == b && x.B == a));
@@ -74,7 +118,7 @@ namespace Vigo.Core.Military
             double d = 0; int age = Eco.S.Week - CapturedWeek[province];
             if (CapturedWeek[province] >= 0 && age < 52) d = 0.6 * (1 - age / 52.0);
             int owner = W.Provinces[province].Owner.Value;
-            if (AtWar(owner) && ProvNeighbors[province].Any(n => AtWar(owner, W.Provinces[n].Owner.Value))) d = Math.Max(d, 0.3 + 0.7 * Math.Min(1, Progress[province]));
+            if (AtWar(owner) && (ProvNeighbors[province].Any(n => AtWar(owner, W.Provinces[n].Owner.Value)) || SeaLinks[province].Any(n => AtWar(owner, W.Provinces[n].Owner.Value) && W.Countries[W.Provinces[n].Owner.Value].HasPort))) d = Math.Max(d, 0.3 + 0.7 * Math.Min(1, Progress[province]));
             return d;
         }
         public bool GameOver(CountryId human) => W.GetCountry(human).Eliminated;
@@ -88,7 +132,7 @@ namespace Vigo.Core.Military
         public bool DeclareWar(CountryId a, CountryId b, bool breakTreaties = false)
         {
             int x = a.Value, y = b.Value; if (x == y || W.Countries[x].Eliminated || W.Countries[y].Eliminated || AtWar(x, y)) return false;
-            if (!W.Countries[x].Neighbors.Contains(b)) return false;
+            if (!W.Countries[x].Neighbors.Contains(b) && !(W.Countries[x].HasPort && SeaAdjacent(x, y))) return false; // đất liền, hoặc đổ bộ từ nước có cảng
             if (Allied(x, y) || HasPact(x, y))
             {
                 if (!breakTreaties) return false;
@@ -167,16 +211,22 @@ namespace Vigo.Core.Military
                 foreach (var pair in new[] { new[] { war.A, war.B }, new[] { war.B, war.A } }) // [kẻ tấn công, kẻ phòng thủ]
                 {
                     int at = pair[0], df = pair[1];
-                    var fronts = new List<int>();
-                    foreach (var pid in W.Countries[df].Provinces) { int p = pid.Value; if (ProvNeighbors[p].Any(n => W.Provinces[n].Owner.Value == at)) fronts.Add(p); }
+                    var fronts = new List<int>(); var landFront = new HashSet<int>(); bool atPort = W.Countries[at].HasPort;
+                    foreach (var pid in W.Countries[df].Provinces)
+                    {
+                        int p = pid.Value;
+                        if (ProvNeighbors[p].Any(n => W.Provinces[n].Owner.Value == at)) { fronts.Add(p); landFront.Add(p); }
+                        else if (atPort && SeaLinks[p].Any(n => W.Provinces[n].Owner.Value == at)) fronts.Add(p); // đổ bộ: chỉ khi kẻ tấn công có cảng
+                    }
                     if (fronts.Count == 0) continue;
-                    var defThreat = new HashSet<int>(); foreach (var pid in W.Countries[df].Provinces) if (ProvNeighbors[pid.Value].Any(n => W.Provinces[n].Owner.Value == at)) defThreat.Add(pid.Value);
+                    var defThreat = new HashSet<int>(fronts);
                     double supAt = Support(at, df), supDf = Support(df, at);
                     double fa = S.Troops[at] / fronts.Count / Math.Max(1, ActiveEnemies(at)), fd = S.Troops[df] / Math.Max(1, defThreat.Count) / Math.Max(1, ActiveEnemies(df));
                     foreach (int p in fronts)
                     {
-                        double att = fa * (0.7 + 0.6 * S.Edu[at]) * Supply[at] * supAt;
-                        double def = fd * (0.7 + 0.6 * S.Edu[df]) * Supply[df] * _terrain[p] * 1.15 * supDf;
+                        bool sea = !landFront.Contains(p);
+                        double att = fa * (0.7 + 0.6 * S.Edu[at]) * Supply[at] * supAt * (sea ? AmphibiousAttack : 1.0);
+                        double def = fd * (0.7 + 0.6 * S.Edu[df]) * Supply[df] * _terrain[p] * 1.15 * supDf * (sea ? CoastalDefense : 1.0);
                         if (att <= 1e-6) continue;
                         double tot = att + def;
                         lossT[at] += fa * 0.03 * 2 * def / tot; lossT[df] += fd * 0.03 * 2 * att / tot;

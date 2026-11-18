@@ -202,6 +202,7 @@ namespace Vigo.Tests
             CitySaveTests.Register(Add, Assert);
             OfferTests.Register(Add, Assert);
             SessionTests.Register(Add, Assert);
+            NavalTests.Register(Add, Assert);
 
             int pass = 0, fail = 0;
             foreach (var t in Tests)

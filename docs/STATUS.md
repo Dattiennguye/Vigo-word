@@ -54,5 +54,11 @@ Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,bre
 ## GameSession – lớp lệnh/vòng lặp thống nhất (XONG, 84 test pass) — xem docs/SESSION.md
 `GameSession.New/Load`, `StepWeek`, lệnh người chơi, `Status()`, `Save/Rewind`. Unity chỉ cần gọi lớp này.
 
+## Hải quân/đổ bộ (XONG, 87 test pass) — xem docs/PHASE6A.md
+`WarSim.SeaLinks/SeaNeighbors/SeaAdjacent`; chiến tranh qua biển cần cảng, đổ bộ yếu hơn đất liền.
+
+## Quyết định mới (Dat, 2026-11-18)
+Không dùng Unity: tôi tự dựng hình ảnh và làm game (xem phần Giao diện bên dưới khi có).
+
 ## Sau đó
-GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, hải quân; lệnh chỉ huy chiến dịch; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6 (còn lại): thuế/sản xuất riêng của thành phố; giao diện chơi được tự dựng; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

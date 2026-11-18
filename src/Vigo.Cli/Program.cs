@@ -20,6 +20,19 @@ namespace Vigo.Cli
                 if (args[i] == "--countries") countries = int.Parse(args[i + 1]);
             }
             for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--seadiag")
+                {
+                    int count = int.Parse(args[i + 1]);
+                    for (int sd = 1; sd <= count; sd++)
+                    {
+                        var wd = WorldGenerator.Generate(new WorldConfig { Seed = (ulong)(sd * 7919), CellCount = 20000 }); var e = new Vigo.Core.Economy.EconomySim(wd); var war = new Vigo.Core.Military.WarSim(wd, e);
+                        int isolated = 0, seaOnly = 0, seaPairs = 0, noPort = 0; int links = 0; foreach (var l in war.SeaLinks) links += l.Count;
+                        foreach (var c in wd.Countries) { var sn = war.SeaNeighbors(c.Id.Value); seaPairs += sn.Count; if (c.Neighbors.Count == 0) { isolated++; if (sn.Count > 0) seaOnly++; } if (!c.HasPort) noPort++; }
+                        Console.WriteLine($"seed {sd * 7919}: {wd.Countries.Count} nước, không láng giềng đất {isolated} (có đường biển {seaOnly}), cặp nước kề biển {seaPairs}, nước không cảng {noPort}, liên kết biển tỉnh {links}");
+                    }
+                    return 0;
+                }
+            for (int i = 0; i < args.Length; i++)
                 if (args[i] == "--diag")
                 {
                     int count = int.Parse(args[i + 1]); var tally = new Dictionary<string, int>(); int ok = 0;

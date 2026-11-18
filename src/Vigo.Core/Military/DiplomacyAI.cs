@@ -40,6 +40,15 @@ namespace Vigo.Core.Military
                     double ratio = _war.CoalitionPower(i) / Math.Max(1e-9, _war.CoalitionPower(n.Id.Value)); // đồng minh của mục tiêu răn đe
                     if (ratio >= 1.8 && ratio > best) { best = ratio; target = n; }
                 }
+                // đổ bộ: nước có cảng chỉ đánh qua biển khi áp đảo hẳn (≥ 3×) vì đổ bộ kém hiệu quả
+                if (target == null && c.HasPort)
+                    foreach (int j in _war.SeaNeighbors(i))
+                    {
+                        var n = W.Countries[j]; if (n.Eliminated || _war.AtWar(j)) continue;
+                        if (_war.LastPeace.TryGetValue(i < j ? i * 10000L + j : j * 10000L + i, out int lp2) && S.Week - lp2 < PeaceCooldown) continue;
+                        double ratio = _war.CoalitionPower(i) / Math.Max(1e-9, _war.CoalitionPower(j));
+                        if (ratio >= 3.0 && ratio > best) { best = ratio; target = n; }
+                    }
                 if (target != null) _war.DeclareWar(c.Id, target.Id);
             }
         }
