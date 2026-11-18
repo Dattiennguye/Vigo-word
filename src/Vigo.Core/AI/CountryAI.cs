@@ -12,6 +12,8 @@ namespace Vigo.Core.AI
         private readonly Economy.EconomySim _eco;
         private readonly HashSet<int> _human = new HashSet<int>();
         public int Interval = 4;
+        /// <summary>Nếu gán, nước đang có chiến tranh sẽ chuyển sang ngân sách thời chiến.</summary>
+        public Military.WarSim War;
         public bool Austerity = true, SmartInvest = true, PersonalityBudget = true;
 
         public CountryAI(Economy.EconomySim eco) { _eco = eco; }
@@ -53,6 +55,7 @@ namespace Vigo.Core.AI
             //    (thuế >25% giảm sản lượng, chi tiêu tính theo tỉ lệ thuế nên chi tăng theo) → AI không dùng thuế để chữa nợ.
             double tax = 0.25;
 
+            if (War != null && War.AtWar(i)) { def = 0.45; invest = 0.10; edu = 0.10; health = 0.15; }
             // 2) Khẩn khoản: nợ nặng hoặc đói → thắt lưng buộc bụng (cắt quốc phòng/đầu tư không thiết yếu, giữ y tế)
             if (Austerity && debtWeeks > 6) { def *= 0.4; edu *= 0.8; invest *= 0.6; }
             if (Austerity && ind.FoodSat < 0.95) { def *= 0.3; health = Math.Max(health, 0.2); }

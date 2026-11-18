@@ -76,6 +76,25 @@ namespace Vigo.Cli
                     return 0;
                 }
             for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--war")
+                {
+                    int years = int.Parse(args[i + 1]);
+                    var world = WorldGenerator.Generate(new WorldConfig { Seed = seed, CellCount = 20000 });
+                    var eco = new Vigo.Core.Economy.EconomySim(world); var war = new Vigo.Core.Military.WarSim(world, eco);
+                    var ai = new Vigo.Core.AI.CountryAI(eco) { War = war }; var dip = new Vigo.Core.Military.DiplomacyAI(war);
+                    var swWar = Stopwatch.StartNew();
+                    for (int wk = 1; wk <= years * 52; wk++)
+                    {
+                        eco.StepWeek(); war.StepWeek(); ai.Think(); dip.Think();
+                        if (wk % 260 == 0) { int alive = 0; double armies = 0, pop = 0; foreach (var c in world.Countries) if (!c.Eliminated) { alive++; armies += eco.S.Troops[c.Id.Value]; pop += c.Population; } Console.WriteLine($"năm {wk / 52,3}: còn {alive}/30 nước, đang có {war.Wars.Count} cuộc chiến, quân {armies / pop:P1} dân, audit {eco.AuditGoods():E1}"); }
+                    }
+                    Console.WriteLine($"{war.Events.Count} sự kiện (cuối cùng):");
+                    foreach (var e in System.Linq.Enumerable.Skip(war.Events, System.Math.Max(0, war.Events.Count - 12))) Console.WriteLine($"  tuần {e.Week,5} [{e.Kind}] {e.Text}");
+                    int nWar = 0, nCap = 0, nPeace = 0; foreach (var e in war.Events) { if (e.Kind == "war") nWar++; if (e.Kind == "capture") nCap++; if (e.Kind == "peace") nPeace++; }
+                    Console.WriteLine($"tổng (500 sự kiện gần nhất): tuyên chiến {nWar}, chiếm tỉnh {nCap}, hòa {nPeace}; {swWar.ElapsedMilliseconds} ms");
+                    return 0;
+                }
+            for (int i = 0; i < args.Length; i++)
                 if (args[i] == "--econ")
                 {
                     int years = int.Parse(args[i + 1]);
@@ -140,12 +159,12 @@ namespace Vigo.Cli
             foreach (var e in w.Validation.Errors.GetRange(0, Math.Min(15, w.Validation.Errors.Count))) Console.WriteLine("  LỖI: " + e);
             foreach (var n in w.GenerationNotes) Console.WriteLine("  ghi chú: " + n);
 
-            var sw2 = Stopwatch.StartNew();
+            var swW = Stopwatch.StartNew();
             var r = new MapRenderer(w, width);
             r.Render(Path.Combine(outDir, "political.png"), "political");
             r.Render(Path.Combine(outDir, "terrain.png"), "terrain");
             r.Render(Path.Combine(outDir, "resources.png"), "resources");
-            Console.WriteLine($"render={sw2.ElapsedMilliseconds}ms -> {outDir}");
+            Console.WriteLine($"render={swW.ElapsedMilliseconds}ms -> {outDir}");
             return w.Validation.IsValid ? 0 : 1;
         }
     }

@@ -49,7 +49,7 @@ namespace Vigo.Core.Economy
             for (int g = 0; g < EconData.GoodCount; g++)
             {
                 double stock = 0; for (int c = 0; c < S.Stock.Length; c++) stock += S.Stock[c][g];
-                double expect = L.Initial[g] + L.Produced[g] - L.Household[g] - L.Industry[g] - L.Invested[g] - L.Lost[g];
+                double expect = L.Initial[g] + L.Produced[g] - L.Household[g] - L.Industry[g] - L.Invested[g] - L.Military[g] - L.Lost[g];
                 worst = Math.Max(worst, Math.Abs(stock - expect) / Math.Max(1, L.Initial[g] + L.Produced[g]));
             }
             return worst;
@@ -95,11 +95,13 @@ namespace Vigo.Core.Economy
                 for (int s = 0; s < EconData.IndustrySectors; s++) S.IndCap[p][s] *= k;
             }
 
-            // 1) Lao động & hệ số năng suất theo tỉnh
+            // 1) Lao động & hệ số năng suất theo tỉnh (quân nhân không đi làm)
+            var cpopArr = new double[NC]; for (int c = 0; c < NC; c++) cpopArr[c] = CountryPop(c);
             for (int p = 0; p < NP; p++)
             {
                 int c = OwnerOf(p); if (c < 0) { S.Util[p] = 0; continue; }
-                double lab = EconData.LabourShare * S.Pop[p] * (0.85 + 0.3 * S.Health[c]);
+                double soldiers = cpopArr[c] > 0 ? Math.Min(S.Troops[c], 0.9 * cpopArr[c]) * S.Pop[p] / cpopArr[c] : 0;
+                double lab = Math.Max(0, EconData.LabourShare * S.Pop[p] * (0.85 + 0.3 * S.Health[c]) - soldiers);
                 double req = S.FarmCap[p] * EconData.LabourPerUnit[0] + S.ForestCap[p] * EconData.LabourPerUnit[1]
                            + (S.MineBase[p] + S.MineBonus[p]) * EconData.LabourPerUnit[2];
                 for (int s = 0; s < EconData.IndustrySectors; s++) req += S.IndCap[p][s] * EconData.LabourPerUnit[3 + s];

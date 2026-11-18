@@ -90,7 +90,7 @@ namespace Vigo.Core.Economy
             s.Stock = new double[NC][]; s.Price = new double[NC][]; s.InvestWeight = new double[NC][];
             s.Treasury = new double[NC]; s.TaxRate = new double[NC]; s.ShareEdu = new double[NC]; s.ShareHealth = new double[NC];
             s.ShareInvest = new double[NC]; s.ShareDefense = new double[NC]; s.Edu = new double[NC]; s.Health = new double[NC];
-            s.Dead = new bool[NC]; s.DefenseSpending = new double[NC]; s.Indicators = new CountryIndicators[NC];
+            s.Dead = new bool[NC]; s.DefenseSpending = new double[NC]; s.Troops = new double[NC]; s.Indicators = new CountryIndicators[NC];
             var cpop = new double[NC];
             for (int p = 0; p < NP; p++) { var o = w.Provinces[p].Owner; if (!o.IsNone) cpop[o.Value] += s.Pop[p]; }
             for (int c = 0; c < NC; c++)

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Vigo.Core.Economy
 {
-    /// <summary>Sổ cái hàng hóa toàn thế giới: Σ tồn kho = Initial + Produced − Household − Industry − Invested − Lost.</summary>
+    /// <summary>Sổ cái hàng hóa toàn thế giới: Σ tồn kho = Initial + Produced − Household − Industry − Invested − Military − Lost.</summary>
     public sealed class Ledger
     {
         public double[] Initial = new double[EconData.GoodCount], Produced = new double[EconData.GoodCount],
             Household = new double[EconData.GoodCount], Industry = new double[EconData.GoodCount],
-            Invested = new double[EconData.GoodCount], Lost = new double[EconData.GoodCount],
+            Invested = new double[EconData.GoodCount], Military = new double[EconData.GoodCount], Lost = new double[EconData.GoodCount],
             TradeVolume = new double[EconData.GoodCount];
         /// <summary>Σ |tiền trả − tiền nhận| trong giao thương (phải ≈ 0).</summary>
         public double TradeMoneyError;
@@ -28,6 +28,7 @@ namespace Vigo.Core.Economy
         public double[] Treasury, TaxRate, ShareEdu, ShareHealth, ShareInvest, ShareDefense, Edu, Health;
         public double[][] InvestWeight;      // [quốc gia][ngành] — null = tự động theo áp lực giá
         public bool[] Dead;
+        public double[] Troops;              // quân số đang tại ngũ (là một phần dân số, trừ khỏi lao động)
         public double[] DefenseSpending;     // tiền chi quốc phòng tuần gần nhất (dành cho GĐ quân sự)
         public CountryIndicators[] Indicators;
         // ---- Tỉnh ----

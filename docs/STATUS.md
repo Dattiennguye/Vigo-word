@@ -33,5 +33,8 @@ Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất n
 ## GĐ4a – AI quốc gia (XONG, 42 test pass) — xem docs/PHASE4A.md
 `new CountryAI(eco)`, gọi `ai.Think()` sau mỗi `eco.StepWeek()`; `SetHuman(c,true)` cho nước người chơi. Phát hiện: tăng thuế chữa nợ phản tác dụng; AI chưa "tối ưu hơn" chính sách cố định, chỉ đa dạng hành vi. Tiếp theo (4b): quân đội, ngoại giao, chiến tranh, mở rộng.
 
+## GĐ4b – Quân đội, ngoại giao, chiến tranh (XONG, 52 test pass) — xem docs/PHASE4B.md
+`new WarSim(world, eco)`; mỗi tuần: `eco.StepWeek(); war.StepWeek(); ai.Think(); dip.Think();` (`new CountryAI(eco){War=war}`, `new DiplomacyAI(war)`). Lệnh: `DeclareWar/MakePeace/ProposePeace`, `GameOver(human)`, `Events`. SaveGame.ToBytes(w, eco, war) (phiên bản 2). Hằng số chiến đấu chưa cân bằng theo trải nghiệm chơi.
+
 ## Sau đó
-GĐ4: AI quốc gia (ngân sách, mở rộng, ngoại giao), quân sự, chiến tranh dùng TransferProvince; nối QoL thành phố ↔ kinh tế quốc gia; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ4c: liên minh/hiệp ước/hòa đàm có điều kiện, hải quân; nối QoL thành phố ↔ kinh tế quốc gia; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using Vigo.Core.Economy;
+using Vigo.Core.Military;
 
 namespace Vigo.Core
 {
@@ -13,12 +14,12 @@ namespace Vigo.Core
     /// </summary>
     public static class SaveGame
     {
-        public const int Version = 1;
+        public const int Version = 2;
         private const uint Magic = 0x4F474956; // "VIGO"
 
         public sealed class SaveException : Exception { public SaveException(string m) : base(m) { } }
 
-        public static byte[] ToBytes(WorldState w, EconomySim eco)
+        public static byte[] ToBytes(WorldState w, EconomySim eco, WarSim war = null)
         {
             using (var ms = new MemoryStream())
             {
@@ -26,7 +27,7 @@ namespace Vigo.Core
                 using (var bw = new BinaryWriter(gz))
                 {
                     var body = new MemoryStream(); var b = new BinaryWriter(body);
-                    WriteBody(b, w, eco); b.Flush();
+                    WriteBody(b, w, eco, war); b.Flush();
                     var bytes = body.ToArray();
                     bw.Write(Magic); bw.Write(Version); bw.Write(Checksum(bytes)); bw.Write(bytes.Length); bw.Write(bytes);
                 }
@@ -34,16 +35,18 @@ namespace Vigo.Core
             }
         }
 
-        public static void Save(string path, WorldState w, EconomySim eco)
+        public static void Save(string path, WorldState w, EconomySim eco, WarSim war = null)
         {
-            var tmp = path + ".tmp"; File.WriteAllBytes(tmp, ToBytes(w, eco));
+            var tmp = path + ".tmp"; File.WriteAllBytes(tmp, ToBytes(w, eco, war));
             if (File.Exists(path)) File.Delete(path);
             File.Move(tmp, path); // ghi tạm rồi đổi tên: mất điện giữa chừng không làm hỏng bản cũ
         }
 
-        public static void Load(string path, out WorldState w, out EconomySim eco) { FromBytes(File.ReadAllBytes(path), out w, out eco); }
+        public static void Load(string path, out WorldState w, out EconomySim eco) { FromBytes(File.ReadAllBytes(path), out w, out eco, out var _war); }
+        public static void Load(string path, out WorldState w, out EconomySim eco, out WarSim war) { FromBytes(File.ReadAllBytes(path), out w, out eco, out war); }
 
-        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco)
+        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco) { FromBytes(data, out w, out eco, out var _war); }
+        public static void FromBytes(byte[] data, out WorldState w, out EconomySim eco, out WarSim war)
         {
             byte[] body;
             try
@@ -60,13 +63,13 @@ namespace Vigo.Core
             }
             catch (InvalidDataException) { throw new SaveException("bản lưu bị hỏng (không giải nén được)"); }
             catch (EndOfStreamException) { throw new SaveException("bản lưu bị cắt cụt"); }
-            ReadBody(new BinaryReader(new MemoryStream(body)), out w, out eco);
+            ReadBody(new BinaryReader(new MemoryStream(body)), out w, out eco, out war);
         }
 
         private static ulong Checksum(byte[] d) { ulong h = 14695981039346656037UL; unchecked { for (int i = 0; i < d.Length; i++) { h ^= d[i]; h *= 1099511628211UL; } } return h; }
 
         // ---------------- ghi ----------------
-        private static void WriteBody(BinaryWriter b, WorldState w, EconomySim eco)
+        private static void WriteBody(BinaryWriter b, WorldState w, EconomySim eco, WarSim war)
         {
             var c = w.Config;
             b.Write(c.Seed); b.Write(c.MapWidth); b.Write(c.MapHeight); b.Write(c.CellCount); b.Write(c.CountryCount);
@@ -96,16 +99,25 @@ namespace Vigo.Core
                 b.Write(ind.GoodsSat); b.Write(ind.Edu); b.Write(ind.Health); b.Write(ind.LabourUtil); b.Write(ind.PriceIndex);
             }
             Arr(b, S.Treasury); Arr(b, S.TaxRate); Arr(b, S.ShareEdu); Arr(b, S.ShareHealth); Arr(b, S.ShareInvest); Arr(b, S.ShareDefense);
-            Arr(b, S.Edu); Arr(b, S.Health); Arr(b, S.DefenseSpending);
+            Arr(b, S.Edu); Arr(b, S.Health); Arr(b, S.DefenseSpending); Arr(b, S.Troops);
             b.Write(S.Blocked.Count); var keys = new List<long>(S.Blocked); keys.Sort(); foreach (long k in keys) b.Write(k);
-            var L = S.Ledger; Arr(b, L.Initial); Arr(b, L.Produced); Arr(b, L.Household); Arr(b, L.Industry); Arr(b, L.Invested); Arr(b, L.Lost); Arr(b, L.TradeVolume); b.Write(L.TradeMoneyError);
+            var L = S.Ledger; Arr(b, L.Initial); Arr(b, L.Produced); Arr(b, L.Household); Arr(b, L.Industry); Arr(b, L.Invested); Arr(b, L.Military); Arr(b, L.Lost); Arr(b, L.TradeVolume); b.Write(L.TradeMoneyError);
+            b.Write(war != null);
+            if (war != null)
+            {
+                b.Write(war.Wars.Count); foreach (var q in war.Wars) { b.Write(q.A); b.Write(q.B); b.Write(q.StartWeek); b.Write(q.Goal); b.Write(q.Captured); }
+                Arr(b, war.Progress); b.Write(war.ProgressBy.Length); foreach (int v in war.ProgressBy) b.Write(v); Arr(b, war.Supply);
+                var lp = new List<KeyValuePair<long, int>>(war.LastPeace); lp.Sort((x, y) => x.Key.CompareTo(y.Key)); b.Write(lp.Count); foreach (var kv in lp) { b.Write(kv.Key); b.Write(kv.Value); }
+                var le = new List<KeyValuePair<int, int>>(war.LastEnd); le.Sort((x, y) => x.Key.CompareTo(y.Key)); b.Write(le.Count); foreach (var kv in le) { b.Write(kv.Key); b.Write(kv.Value); }
+                b.Write(war.Events.Count); foreach (var ev in war.Events) { b.Write(ev.Week); b.Write(ev.Kind); b.Write(ev.A); b.Write(ev.B); b.Write(ev.Text); }
+            }
         }
 
         private static void Arr(BinaryWriter b, double[] a) { b.Write(a.Length); foreach (double v in a) b.Write(v); }
         private static double[] ArrR(BinaryReader r) { int n = r.ReadInt32(); if (n < 0 || n > 50_000_000) throw new SaveException("độ dài mảng không hợp lệ"); var a = new double[n]; for (int i = 0; i < n; i++) a[i] = r.ReadDouble(); return a; }
 
         // ---------------- đọc ----------------
-        private static void ReadBody(BinaryReader r, out WorldState w, out EconomySim eco)
+        private static void ReadBody(BinaryReader r, out WorldState w, out EconomySim eco, out WarSim war)
         {
             var c = new WorldConfig
             {
@@ -157,10 +169,20 @@ namespace Vigo.Core
                 };
             }
             S.Treasury = ArrR(r); S.TaxRate = ArrR(r); S.ShareEdu = ArrR(r); S.ShareHealth = ArrR(r); S.ShareInvest = ArrR(r); S.ShareDefense = ArrR(r);
-            S.Edu = ArrR(r); S.Health = ArrR(r); S.DefenseSpending = ArrR(r);
+            S.Edu = ArrR(r); S.Health = ArrR(r); S.DefenseSpending = ArrR(r); S.Troops = ArrR(r);
             int nb = r.ReadInt32(); for (int i = 0; i < nb; i++) S.Blocked.Add(r.ReadInt64());
-            var L = S.Ledger; L.Initial = ArrR(r); L.Produced = ArrR(r); L.Household = ArrR(r); L.Industry = ArrR(r); L.Invested = ArrR(r); L.Lost = ArrR(r); L.TradeVolume = ArrR(r); L.TradeMoneyError = r.ReadDouble();
+            var L = S.Ledger; L.Initial = ArrR(r); L.Produced = ArrR(r); L.Household = ArrR(r); L.Industry = ArrR(r); L.Invested = ArrR(r); L.Military = ArrR(r); L.Lost = ArrR(r); L.TradeVolume = ArrR(r); L.TradeMoneyError = r.ReadDouble();
             eco = new EconomySim(w, S);
+            war = null;
+            if (r.ReadBoolean())
+            {
+                war = new WarSim(w, eco);
+                int nw = r.ReadInt32(); for (int i = 0; i < nw; i++) war.Wars.Add(new War { A = r.ReadInt32(), B = r.ReadInt32(), StartWeek = r.ReadInt32(), Goal = r.ReadInt32(), Captured = r.ReadInt32() });
+                war.Progress = ArrR(r); int npb = r.ReadInt32(); war.ProgressBy = new int[npb]; for (int i = 0; i < npb; i++) war.ProgressBy[i] = r.ReadInt32(); war.Supply = ArrR(r);
+                int nl = r.ReadInt32(); for (int i = 0; i < nl; i++) war.LastPeace[r.ReadInt64()] = r.ReadInt32();
+                int nle = r.ReadInt32(); for (int i = 0; i < nle; i++) war.LastEnd[r.ReadInt32()] = r.ReadInt32();
+                int ne = r.ReadInt32(); for (int i = 0; i < ne; i++) war.Events.Add(new GameEvent { Week = r.ReadInt32(), Kind = r.ReadString(), A = r.ReadInt32(), B = r.ReadInt32(), Text = r.ReadString() });
+            }
         }
     }
 
@@ -170,16 +192,17 @@ namespace Vigo.Core
         private readonly int _capacity; private readonly LinkedList<KeyValuePair<int, byte[]>> _snaps = new LinkedList<KeyValuePair<int, byte[]>>();
         public RewindBuffer(int capacity) { _capacity = Math.Max(1, capacity); }
         public int Count => _snaps.Count;
-        public void Push(WorldState w, EconomySim eco) { _snaps.AddLast(new KeyValuePair<int, byte[]>(eco.S.Week, SaveGame.ToBytes(w, eco))); while (_snaps.Count > _capacity) _snaps.RemoveFirst(); }
+        public void Push(WorldState w, EconomySim eco, WarSim war = null) { _snaps.AddLast(new KeyValuePair<int, byte[]>(eco.S.Week, SaveGame.ToBytes(w, eco, war))); while (_snaps.Count > _capacity) _snaps.RemoveFirst(); }
         public int[] Weeks() { var l = new List<int>(); foreach (var kv in _snaps) l.Add(kv.Key); return l.ToArray(); }
         /// <summary>Quay về mốc gần nhất không muộn hơn tuần yêu cầu; các mốc muộn hơn bị bỏ (nhánh lịch sử mới).</summary>
-        public bool Rewind(int week, out WorldState w, out EconomySim eco)
+        public bool Rewind(int week, out WorldState w, out EconomySim eco) { return Rewind(week, out w, out eco, out var _war); }
+        public bool Rewind(int week, out WorldState w, out EconomySim eco, out WarSim war)
         {
-            w = null; eco = null; var node = _snaps.Last;
+            w = null; eco = null; war = null; var node = _snaps.Last;
             while (node != null && node.Value.Key > week) node = node.Previous;
             if (node == null) return false;
             while (_snaps.Last != node) _snaps.RemoveLast();
-            SaveGame.FromBytes(node.Value.Value, out w, out eco); return true;
+            SaveGame.FromBytes(node.Value.Value, out w, out eco, out war); return true;
         }
     }
 }
