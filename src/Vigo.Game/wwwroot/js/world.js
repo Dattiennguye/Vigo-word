@@ -161,7 +161,7 @@ const WorldView = {
       ctx.fillStyle = owner >= 0 ? countryColor(owner, 44, 50) : '#8c3b2a'; ctx.beginPath(); ctx.moveTo(x - s * 0.8, y - s * 0.15); ctx.lineTo(x, y - s * 0.95); ctx.lineTo(x + s * 0.8, y - s * 0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
       if (c.capital) { ctx.fillStyle = '#d8b25a'; ctx.beginPath(); ctx.arc(x, y - s * 1.2, s * 0.32, 0, 6.3); ctx.fill(); ctx.stroke(); }
       if (cs && cs.open) { ctx.font = `${Math.round(s * 1.1)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('🏙', x + s * 1.1, y - s * 0.4); }
-      if (v.s > this.minS * 3.2 || c.capital && v.s > this.minS * 1.8) { ctx.font = '700 11px Georgia,serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(c.name, x, y + s * 1.3 + 8); ctx.fillStyle = '#3b2a18'; ctx.fillText(c.name, x, y + s * 1.3 + 8); }
+      if (v.s > this.minS * 3.2 || c.capital && v.s > this.minS * 1.8) { ctx.font = '700 15px "EB Garamond",Georgia,serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(c.name, x, y + s * 1.3 + 8); ctx.fillStyle = '#3b2a18'; ctx.fillText(c.name, x, y + s * 1.3 + 8); }
     }
   },
 
@@ -171,10 +171,10 @@ const WorldView = {
       for (const c of this.I.countries) {
         if (c.elim) continue; const live = this.countryLive && this.countryLive[c.id]; if (live && live.elim) continue;
         const [x, y] = this.toScreen(live && live.cx !== undefined ? live.cx : c.cx, live && live.cy !== undefined ? live.cy : c.cy); const size = Math.max(11, Math.min(20, 9 + v.s * 3));
-        ctx.font = `900 ${size}px Georgia,serif`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(240,226,190,.92)'; ctx.strokeText(c.name, x, y); ctx.fillStyle = c.id === this.player ? '#d6246b' : '#3b2a18'; ctx.fillText(c.name, x, y);
+        ctx.font = `700 ${size + 2}px "EB Garamond",Georgia,serif`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(240,226,190,.92)'; ctx.strokeText(c.name, x, y); ctx.fillStyle = c.id === this.player ? '#d6246b' : '#3b2a18'; ctx.fillText(c.name, x, y);
       }
     } else {
-      this.I.provinces.forEach((p, i) => { const [x, y] = this.toScreen(p.cx, p.cy); const size = Math.max(10, Math.min(15, 8 + v.s * 0.8)); ctx.font = `800 ${size}px Georgia,serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(p.name, x, y); ctx.fillStyle = '#3b2a18'; ctx.fillText(p.name, x, y); });
+      this.I.provinces.forEach((p, i) => { const [x, y] = this.toScreen(p.cx, p.cy); const size = Math.max(10, Math.min(15, 8 + v.s * 0.8)); ctx.font = `700 ${size}px "EB Garamond",Georgia,serif`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(p.name, x, y); ctx.fillStyle = '#3b2a18'; ctx.fillText(p.name, x, y); });
     }
   }
 };
