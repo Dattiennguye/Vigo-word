@@ -47,7 +47,10 @@ const CityView = {
 
   bind() {
     if (this._bound) return; this._bound = true; const cv = this.cv;
+    const ptrs = new Map(); this.ptrs = ptrs;
     cv.addEventListener('pointerdown', (e) => {
+      ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
+      if (ptrs.size === 2) { const [p, q] = [...ptrs.values()]; this.drag = null; this.pinch = { d: Math.hypot(p[0] - q[0], p[1] - q[1]) || 1, k: this.k }; return; }
       cv.setPointerCapture(e.pointerId); const [x, y] = this.inv(e.offsetX, e.offsetY); const k = this.tool.kind;
       if (k === 'pan' || e.button === 2) this.drag = { pan: true, px: e.offsetX, py: e.offsetY, ox: this.ox, oy: this.oy };
       else if (k === 'road') this.drag = { road: true, x1: x, y1: y, x2: x, y2: y };
@@ -55,12 +58,17 @@ const CityView = {
       else this.act(k, x, y);
     });
     cv.addEventListener('pointermove', (e) => {
+      if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
+      if (this.pinch && ptrs.size >= 2) {
+        const [p, q] = [...ptrs.values()], d = Math.hypot(p[0] - q[0], p[1] - q[1]) || 1, mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, [wx, wy] = this.inv(mx, my);
+        this.k = Math.max(this.minK, Math.min(this.minK * 8, this.pinch.k * d / this.pinch.d)); this.ox = mx - (wx - wy) * this.k; this.oy = my - (wx + wy) * this.k * 0.5; this.dirty = true; return;
+      }
       const [x, y] = this.inv(e.offsetX, e.offsetY); this.hover = [x, y, e.offsetX, e.offsetY]; this.dirty = true; const d = this.drag; if (!d) return;
       if (d.pan) { this.ox = d.ox + e.offsetX - d.px; this.oy = d.oy + e.offsetY - d.py; }
       else if (d.road) { d.x2 = x; d.y2 = y; }
       else if (d.zone && performance.now() - d.last > 120) { d.last = performance.now(); this.act('zone', x, y); }
     });
-    const up = async (e) => { const d = this.drag; this.drag = null; if (d && d.road) { const dist = Math.hypot(d.x2 - d.x1, d.y2 - d.y1); if (dist > 20) await this.act('road', d.x1, d.y1, d.x2, d.y2); } this.dirty = true; };
+    const up = async (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) this.pinch = null; if (this.pinchEnd) { this.pinchEnd = false; return; } const d = this.drag; this.drag = null; if (d && d.road) { const dist = Math.hypot(d.x2 - d.x1, d.y2 - d.y1); if (dist > 20) await this.act('road', d.x1, d.y1, d.x2, d.y2); } this.dirty = true; };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('contextmenu', (e) => e.preventDefault());
     cv.addEventListener('wheel', (e) => { e.preventDefault(); const [wx, wy] = this.inv(e.offsetX, e.offsetY); this.k = Math.max(this.minK, Math.min(this.minK * 8, this.k * (e.deltaY < 0 ? 1.15 : 1 / 1.15))); this.ox = e.offsetX - (wx - wy) * this.k; this.oy = e.offsetY - (wx + wy) * this.k * 0.5; this.dirty = true; }, { passive: false });
     window.addEventListener('resize', () => { if (this.running) { this.resize(); this.dirty = true; } });

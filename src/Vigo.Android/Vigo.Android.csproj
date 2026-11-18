@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Bản Android độc lập: WebView hiển thị giao diện HTML5, lõi C# (Vigo.Core/Vigo.Api) chạy ngay trong ứng dụng, không cần máy chủ hay mạng. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>11.0</LangVersion>
+    <RootNamespace>Vigo.Android</RootNamespace>
+    <AssemblyName>Vigo.Android</AssemblyName>
+    <ApplicationId>vn.vigo.empire</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vigo.Core\Vigo.Core.csproj" />
+    <ProjectReference Include="..\Vigo.Api\Vigo.Api.csproj" />
+    <AndroidAsset Include="..\Vigo.Game\wwwroot\**\*.*" Link="Assets\wwwroot\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

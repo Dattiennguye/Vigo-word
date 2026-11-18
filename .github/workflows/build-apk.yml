@@ -1,0 +1,65 @@
+name: Build VIGO Empire APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cài workload Android
+        run: dotnet workload install android
+
+      - name: Chạy bộ kiểm thử lõi (phải qua hết mới đóng gói)
+        run: dotnet run --project src/Vigo.Tests -c Release
+
+      - name: Đóng gói APK
+        env:
+          KSPASS: vigo-empire
+        run: |
+          dotnet publish src/Vigo.Android -c Release \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore=${{ github.workspace }}/android/vigo.keystore \
+            -p:AndroidSigningKeyAlias=vigo \
+            -p:AndroidSigningKeyPass=env:KSPASS \
+            -p:AndroidSigningStorePass=env:KSPASS \
+            -p:ApplicationVersion=${{ github.run_number }} \
+            -o out-apk
+          ls -la out-apk
+          APK=$(find out-apk -name '*-Signed.apk' | head -n1)
+          if [ -z "$APK" ]; then APK=$(find out-apk -name '*.apk' | head -n1); fi
+          echo "APK: $APK"
+          cp "$APK" VIGO-Empire.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VIGO-Empire-apk
+          path: VIGO-Empire.apk
+
+      - name: Đăng lên GitHub Releases (bản mới nhất)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: VIGO Empire — APK mới nhất
+          body: |
+            Bản Android độc lập (chơi offline, không cần máy chủ). Cài trực tiếp file `VIGO-Empire.apk`.
+            Build #${{ github.run_number }} từ commit ${{ github.sha }}.
+          files: VIGO-Empire.apk
+          prerelease: true

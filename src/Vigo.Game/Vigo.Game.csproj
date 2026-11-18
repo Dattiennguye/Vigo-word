@@ -7,5 +7,5 @@
     <RootNamespace>Vigo.Game</RootNamespace>
     <AssemblyName>VigoGame</AssemblyName>
   </PropertyGroup>
-  <ItemGroup><ProjectReference Include="..\Vigo.Core\Vigo.Core.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\Vigo.Core\Vigo.Core.csproj" /><ProjectReference Include="..\Vigo.Api\Vigo.Api.csproj" /></ItemGroup>
 </Project>

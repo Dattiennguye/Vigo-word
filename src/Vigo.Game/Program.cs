@@ -35,7 +35,13 @@ namespace Vigo.Game
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
             var app = builder.Build();
             app.UseDefaultFiles(); app.UseStaticFiles();
-            Api.Map(app, Gate, () => Game, g => Game = g, SaveDir);
+            var api = new Vigo.Api.GameApi(SaveDir);
+            app.Map("/api/{**rest}", async (HttpContext ctx) =>
+            {
+                string body = ""; if (ctx.Request.Method == "POST") { using (var r = new StreamReader(ctx.Request.Body)) body = await r.ReadToEndAsync(); }
+                var (status, json) = api.Handle(ctx.Request.Method, ctx.Request.Path.Value + ctx.Request.QueryString.Value, body);
+                ctx.Response.StatusCode = status; ctx.Response.ContentType = "application/json; charset=utf-8"; await ctx.Response.WriteAsync(json);
+            });
             Console.WriteLine("VIGO đang chạy tại " + url);
             app.Run();
             return 0;

@@ -3,46 +3,49 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Vigo.Core;
 using Vigo.Core.CityBuilder;
 using Vigo.Core.Economy;
 using Vigo.Core.Military;
 
-namespace Vigo.Game
+namespace Vigo.Api
 {
-    internal static class Api
+    /// <summary>
+    /// API trò chơi không phụ thuộc máy chủ web: nhận (method, đường dẫn, JSON) và trả JSON.
+    /// Dùng chung cho bản chạy trình duyệt (Kestrel) và bản Android (WebView gọi thẳng, không cần mạng).
+    /// </summary>
+    public sealed class GameApi
     {
+        private readonly object _gate = new object();
+        private GameSession _game;
+        private readonly string _saveDir;
+        private readonly Dictionary<string, Func<JsonElement, object>> Post = new Dictionary<string, Func<JsonElement, object>>();
+        private readonly Dictionary<string, Func<Dictionary<string, string>, object>> Get = new Dictionary<string, Func<Dictionary<string, string>, object>>();
+        private static readonly JsonSerializerOptions Opt = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
         private static double R1(double v) => Math.Round(v, 1);
         private static double R3(double v) => Math.Round(v, 3);
 
-        public static void Map(WebApplication app, object gate, Func<GameSession> get, Action<GameSession> set, string saveDir)
+        public GameApi(string saveDir)
         {
-            IResult Locked(Func<object> f)
-            {
-                lock (gate)
-                {
-                    try { return Results.Json(f()); }
-                    catch (Exception e) { return Results.Json(new { ok = false, error = e.Message }, statusCode: 400); }
-                }
-            }
-            GameSession G() { var g = get(); if (g == null) throw new InvalidOperationException("chưa có ván chơi"); return g; }
+            _saveDir = saveDir; var saveDirL = saveDir;
+            GameSession G() { if (_game == null) throw new InvalidOperationException("chưa có ván chơi"); return _game; }
+            Func<GameSession> get = () => _game; Action<GameSession> set = g => _game = g;
             double D(JsonElement j, string k, double d = 0) => j.ValueKind == JsonValueKind.Object && j.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : d;
             string S(JsonElement j, string k) => j.ValueKind == JsonValueKind.Object && j.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+            string saveDir2 = saveDirL;
 
-            app.MapGet("/api/hello", () => Locked(() => new { ok = true, hasGame = get() != null }));
+            Get["/api/hello"] = q => new { ok = true, hasGame = get() != null };
 
-            app.MapPost("/api/new", (JsonElement body) => Locked(() =>
+            Post["/api/new"] = body =>
             {
                 ulong seed = (ulong)D(body, "seed", 12345); int cells = (int)D(body, "cells", 20000); int nc = (int)D(body, "countries", 30);
                 cells = Math.Max(4000, Math.Min(60000, cells));
                 var g = GameSession.New(new WorldConfig { Seed = seed, CellCount = cells, CountryCount = nc }, new CountryId(0));
                 set(g); return new { ok = true };
-            }));
+            };
 
-            app.MapGet("/api/map", () => Locked(() =>
+            Get["/api/map"] = q =>
             {
                 var w = G().World; int n = w.CellCount; var gr = w.Grid;
                 var x = new double[n]; var y = new double[n]; var elev = new int[n]; var flags = new int[n];
@@ -52,9 +55,9 @@ namespace Vigo.Game
                     flags[i] = (w.IsOcean[i] ? 1 : 0) | (w.IsLake[i] ? 2 : 0) | (w.IsRiver[i] ? 4 : 0) | (w.IsRoad[i] ? 8 : 0);
                 }
                 return new { ok = true, width = w.Config.MapWidth, height = w.Config.MapHeight, spacing = gr.Spacing, n, x, y, elev, biome = w.Biomes.Select(b => (int)b).ToArray(), flags, province = w.ProvinceOfCell };
-            }));
+            };
 
-            app.MapGet("/api/world", () => Locked(() =>
+            Get["/api/world"] = q =>
             {
                 var g = G(); var w = g.World;
                 return new
@@ -64,27 +67,27 @@ namespace Vigo.Game
                     provinces = w.Provinces.Select(p => new { id = p.Id.Value, name = p.Name, cx = R1(p.CentroidX), cy = R1(p.CentroidY) }),
                     cities = w.Cities.Select(c => new { id = c.Id.Value, name = c.Name, x = R1(c.X), y = R1(c.Y), prov = c.Province.Value, port = c.IsPort, capital = c.IsCapital, seat = c.IsProvincialSeat })
                 };
-            }));
+            };
 
-            app.MapPost("/api/player", (JsonElement body) => Locked(() => new { ok = G().ChoosePlayer(new CountryId((int)D(body, "country"))) }));
+            Post["/api/player"] = body => new { ok = G().ChoosePlayer(new CountryId((int)D(body, "country"))) };
 
-            app.MapGet("/api/state", () => Locked(() => State(G())));
+            Get["/api/state"] = q => State(G());
 
-            app.MapPost("/api/step", (JsonElement body) => Locked(() =>
+            Post["/api/step"] = body =>
             {
                 var g = G(); int n = Math.Max(1, Math.Min(260, (int)D(body, "n", 1))); int done = 0;
                 int before = g.Eco.S.Week / 208; for (int i = 0; i < n; i++) { if (!g.StepWeek()) break; done++; }
-                if (g.Eco.S.Week / 208 != before && !g.GameOver) { Directory.CreateDirectory(saveDir); g.Save(Path.Combine(saveDir, "tudongluu.vigo")); } // tự lưu mỗi 4 năm
+                if (g.Eco.S.Week / 208 != before && !g.GameOver) { Directory.CreateDirectory(saveDir2); g.Save(Path.Combine(saveDir2, "tudongluu.vigo")); } // tự lưu mỗi 4 năm
                 return new { ok = true, done, state = State(g) };
-            }));
+            };
 
-            app.MapPost("/api/tax", (JsonElement body) => Locked(() => { var g = G(); g.SetTax(D(body, "rate", 0.25)); return new { ok = true, state = State(g) }; }));
-            app.MapPost("/api/budget", (JsonElement body) => Locked(() =>
+            Post["/api/tax"] = body => { var g = G(); g.SetTax(D(body, "rate", 0.25)); return new { ok = true, state = State(g) }; };
+            Post["/api/budget"] = body =>
             {
                 var g = G(); g.SetBudget(D(body, "edu"), D(body, "health"), D(body, "invest"), D(body, "defense")); return new { ok = true, state = State(g) };
-            }));
+            };
 
-            app.MapPost("/api/diplo", (JsonElement body) => Locked(() =>
+            Post["/api/diplo"] = body =>
             {
                 var g = G(); string a = S(body, "action"); var t = new CountryId((int)D(body, "target", -1)); bool ok;
                 switch (a)
@@ -98,40 +101,40 @@ namespace Vigo.Game
                     default: throw new InvalidOperationException("lệnh ngoại giao không biết: " + a);
                 }
                 return new { ok, state = State(g) };
-            }));
+            };
 
-            app.MapPost("/api/offer", (JsonElement body) => Locked(() =>
+            Post["/api/offer"] = body =>
             {
                 var g = G(); int id = (int)D(body, "id"); bool ok = D(body, "accept") > 0 ? g.AcceptOffer(id) : g.DeclineOffer(id);
                 return new { ok, state = State(g) };
-            }));
+            };
 
-            app.MapGet("/api/saves", () => Locked(() =>
+            Get["/api/saves"] = q =>
             {
-                Directory.CreateDirectory(saveDir);
-                return new { ok = true, saves = new DirectoryInfo(saveDir).GetFiles("*.vigo").OrderByDescending(f => f.LastWriteTimeUtc).Select(f => new { name = Path.GetFileNameWithoutExtension(f.Name), size = f.Length, time = f.LastWriteTimeUtc.ToString("s") }) };
-            }));
-            app.MapPost("/api/save", (JsonElement body) => Locked(() =>
+                Directory.CreateDirectory(saveDir2);
+                return new { ok = true, saves = new DirectoryInfo(saveDir2).GetFiles("*.vigo").OrderByDescending(f => f.LastWriteTimeUtc).Select(f => new { name = Path.GetFileNameWithoutExtension(f.Name), size = f.Length, time = f.LastWriteTimeUtc.ToString("s") }) };
+            };
+            Post["/api/save"] = body =>
             {
-                var g = G(); string name = SafeName(S(body, "name") ?? "autosave"); Directory.CreateDirectory(saveDir); g.Save(Path.Combine(saveDir, name + ".vigo")); return new { ok = true, name };
-            }));
-            app.MapPost("/api/load", (JsonElement body) => Locked(() =>
+                var g = G(); string name = SafeName(S(body, "name") ?? "autosave"); Directory.CreateDirectory(saveDir2); g.Save(Path.Combine(saveDir2, name + ".vigo")); return new { ok = true, name };
+            };
+            Post["/api/load"] = body =>
             {
-                string name = SafeName(S(body, "name") ?? ""); var path = Path.Combine(saveDir, name + ".vigo"); if (!File.Exists(path)) throw new InvalidOperationException("không có bản lưu " + name);
+                string name = SafeName(S(body, "name") ?? ""); var path = Path.Combine(saveDir2, name + ".vigo"); if (!File.Exists(path)) throw new InvalidOperationException("không có bản lưu " + name);
                 var g = GameSession.Load(path); set(g); return new { ok = true };
-            }));
-            app.MapPost("/api/rewind", (JsonElement body) => Locked(() => { var g = G(); bool ok = g.Rewind((int)D(body, "week")); return new { ok, state = State(g) }; }));
-            app.MapGet("/api/history", () => Locked(() => new { ok = true, weeks = G().History.Weeks() }));
+            };
+            Post["/api/rewind"] = body => { var g = G(); bool ok = g.Rewind((int)D(body, "week")); return new { ok, state = State(g) }; };
+            Get["/api/history"] = q => new { ok = true, weeks = G().History.Weeks() };
 
             // ---------------- Thành phố chi tiết ----------------
-            app.MapPost("/api/city/open", (JsonElement body) => Locked(() =>
+            Post["/api/city/open"] = body =>
             {
                 var g = G(); var id = new CityId((int)D(body, "id")); g.OpenCity(id, (ulong)(id.Value + 1));
                 var sim = g.Cities.First(c => c.Id == id).Sim; if (sim.Buildings.Count == 0 && sim.Edges.Count == 0 && D(body, "demo") > 0) DemoScenario.BuildTown(sim);
                 return new { ok = true, city = CityJson(g, id) };
-            }));
-            app.MapGet("/api/city", (HttpRequest rq) => Locked(() => { var g = G(); return new { ok = true, city = CityJson(g, new CityId(int.Parse(rq.Query["id"]))) }; }));
-            app.MapPost("/api/city/cmd", (JsonElement body) => Locked(() =>
+            };
+            Get["/api/city"] = q => { var g = G(); return new { ok = true, city = CityJson(g, new CityId(int.Parse(q["id"]))) }; };
+            Post["/api/city/cmd"] = body =>
             {
                 var g = G(); var id = new CityId((int)D(body, "id")); var ent = g.Cities.FirstOrDefault(c => c.Id == id); if (ent == null) throw new InvalidOperationException("thành phố chưa mở");
                 var sim = ent.Sim; string cmd = S(body, "cmd"); Result r;
@@ -144,7 +147,34 @@ namespace Vigo.Game
                     default: throw new InvalidOperationException("lệnh thành phố không biết: " + cmd);
                 }
                 return new { ok = r.Ok, error = r.Error, count = r.Count, city = CityJson(g, id) };
-            }));
+            };
+        }
+
+        /// <summary>Xử lý một yêu cầu. Trả (mã trạng thái, JSON).</summary>
+        public (int status, string json) Handle(string method, string url, string bodyJson)
+        {
+            string path = url, query = ""; int qi = url.IndexOf('?'); if (qi >= 0) { path = url.Substring(0, qi); query = url.Substring(qi + 1); }
+            lock (_gate)
+            {
+                try
+                {
+                    object r;
+                    if (method == "GET")
+                    {
+                        if (!Get.TryGetValue(path, out var h)) return (404, "{\"ok\":false,\"error\":\"không có đường dẫn\"}");
+                        var q = new Dictionary<string, string>(); foreach (var kv in query.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries)) { var p = kv.Split('='); q[Uri.UnescapeDataString(p[0])] = p.Length > 1 ? Uri.UnescapeDataString(p[1]) : ""; }
+                        r = h(q);
+                    }
+                    else
+                    {
+                        if (!Post.TryGetValue(path, out var h)) return (404, "{\"ok\":false,\"error\":\"không có đường dẫn\"}");
+                        JsonElement body = default; if (!string.IsNullOrWhiteSpace(bodyJson)) { using (var doc = JsonDocument.Parse(bodyJson)) body = doc.RootElement.Clone(); }
+                        r = h(body);
+                    }
+                    return (200, JsonSerializer.Serialize(r, Opt));
+                }
+                catch (Exception e) { return (400, JsonSerializer.Serialize(new { ok = false, error = e.Message }, Opt)); }
+            }
         }
 
         private static string SafeName(string s) { var ok = new string((s ?? "").Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray()); return ok.Length == 0 ? "save" : ok.Substring(0, Math.Min(40, ok.Length)); }
