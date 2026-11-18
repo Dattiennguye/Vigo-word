@@ -15,7 +15,7 @@ namespace Vigo.Android
 {
     [Activity(Label = "VIGO Empire", MainLauncher = true, Exported = true, Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen",
         ScreenOrientation = ScreenOrientation.SensorLandscape,
-        ConfigChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.KeyboardHidden | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.UiMode)]
+        ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.KeyboardHidden | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.UiMode)]
     public class MainActivity : Activity
     {
         internal const string Host = "https://vigo.local";
@@ -42,7 +42,7 @@ namespace Vigo.Android
         private void HideSystemUi()
         {
 #pragma warning disable CA1422
-            Window.DecorView.SystemUiFlags = (SystemUiFlags)(int)(SystemUiFlags.LayoutStable | SystemUiFlags.LayoutHideNavigation | SystemUiFlags.LayoutFullscreen | SystemUiFlags.HideNavigation | SystemUiFlags.Fullscreen | SystemUiFlags.ImmersiveSticky);
+            Window.DecorView.SystemUiVisibility = (StatusBarVisibility)(int)(SystemUiFlags.LayoutStable | SystemUiFlags.LayoutHideNavigation | SystemUiFlags.LayoutFullscreen | SystemUiFlags.HideNavigation | SystemUiFlags.Fullscreen | SystemUiFlags.ImmersiveSticky);
 #pragma warning restore CA1422
         }
 
