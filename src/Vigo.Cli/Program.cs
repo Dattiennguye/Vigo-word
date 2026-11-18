@@ -38,6 +38,40 @@ namespace Vigo.Cli
                     return 0;
                 }
             for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--econ")
+                {
+                    int years = int.Parse(args[i + 1]);
+                    var world = WorldGenerator.Generate(new WorldConfig { Seed = seed, CellCount = 20000 });
+                    var eco = new Vigo.Core.Economy.EconomySim(world);
+                    var swE = Stopwatch.StartNew();
+                    Console.WriteLine("năm  dân(tr)  thiếu_ăn(nước)  ăn%   nhiên_liệu%  hàng%  GDP/người  giá_TB  giao_thương  audit");
+                    for (int wk = 1; wk <= years * 52; wk++)
+                    {
+                        eco.StepWeek();
+                        if (wk % 52 == 0)
+                        {
+                            double pop = 0, va = 0, fs = 0, fu = 0, gs = 0, pi = 0; int hungry = 0, n = 0;
+                            for (int c = 0; c < world.Countries.Count; c++) { if (eco.S.Dead[c]) continue; var d = eco.S.Indicators[c]; n++; pop += d.Population; va += d.ValueAdded; fs += d.FoodSat * d.Population; fu += d.FuelSat * d.Population; gs += d.GoodsSat * d.Population; pi += d.PriceIndex; if (d.FoodSat < 0.9) hungry++; }
+                            double tv = 0; foreach (var v in eco.S.Ledger.TradeVolume) tv += v;
+                            Console.WriteLine($"{wk / 52,3} {pop / 1e6,8:0.00} {hungry,10}/{n}   {fs / pop,5:P0}   {fu / pop,6:P0}   {gs / pop,5:P0}   {va / pop,7:0.00}  {pi / n,6:0.00}  {tv / 52,10:0}   {eco.AuditGoods():E1}");
+                        }
+                    }
+                    var Lg = eco.S.Ledger; Console.WriteLine("hàng      tồn_kho   sản_xuất/năm  hộ/năm  chế_biến/năm  mỏ_còn%  sai_lệch");
+                    for (int g = 0; g < Vigo.Core.Economy.EconData.GoodCount; g++) { double st = eco.TotalStock((Vigo.Core.Economy.Good)g); double ex = Lg.Initial[g] + Lg.Produced[g] - Lg.Household[g] - Lg.Industry[g] - Lg.Invested[g] - Lg.Lost[g]; Console.WriteLine($"{(Vigo.Core.Economy.Good)g,-10}{st,10:0}{Lg.Produced[g] / years,12:0}{Lg.Household[g] / years,10:0}{Lg.Industry[g] / years,12:0}   {(st - ex),10:E1}"); }
+                    { var capSum = new double[Vigo.Core.Economy.EconData.GoodCount]; for (int d = 0; d < world.Deposits.Count; d++) capSum[(int)Vigo.Core.Economy.EconData.ToGood(world.Deposits[d].Type)] += eco.S.DepRate[d] * 52;
+                      double us = 0, un = 0; for (int p = 0; p < world.Provinces.Count; p++) { us += eco.S.Util[p] * eco.S.Pop[p]; un += eco.S.Pop[p]; }
+                      Console.Write("công suất mỏ/năm: "); for (int g = 2; g <= 9; g++) Console.Write($"{(Vigo.Core.Economy.Good)g}={capSum[g]:0} "); Console.WriteLine($"| util dân quyền TB={us / un:P0}"); }
+                    Console.WriteLine("nước thiếu ăn: tên, dân(tr), ăn%, kho bạc/người, giá ăn, FarmCap/dân, tỉnh, đất(ô)");
+                    foreach (var c in world.Countries) { int ci = c.Id.Value; var dd = eco.S.Indicators[ci]; if (eco.S.Dead[ci] || dd.FoodSat >= 0.95) continue; double fc = 0; foreach (var pid in c.Provinces) fc += eco.S.FarmCap[pid.Value];
+                      Console.WriteLine($"  {c.Name,-12}{dd.Population / 1e6,6:0.00} {dd.FoodSat,6:P0} {eco.S.Treasury[ci] / dd.Population,8:0.0} {eco.S.Price[ci][0],6:0.00} {fc / dd.Population,7:0.00} {c.Provinces.Count} {c.LandCells}"); }
+                    Console.WriteLine("quốc gia thiếu hàng nhất: tên, dân(tr), hàng%, kho bạc/người, công suất Goods/người, kho đầu vào Goods (Steel IndMat Wood Prec Cu)");
+                    foreach (var c in System.Linq.Enumerable.Take(System.Linq.Enumerable.OrderBy(world.Countries, x => eco.S.Indicators[x.Id.Value].GoodsSat), 6))
+                    { int ci = c.Id.Value; double gc = 0; foreach (var pid in c.Provinces) gc += eco.S.IndCap[pid.Value][3]; var st = eco.S.Stock[ci]; var dd = eco.S.Indicators[ci];
+                      Console.WriteLine($"  {c.Name,-12}{dd.Population / 1e6,6:0.00} {dd.GoodsSat,6:P0} {eco.S.Treasury[ci] / dd.Population,8:0.0} {gc / dd.Population,8:0.000}  {st[10]:0} {st[9]:0} {st[1]:0} {st[8]:0} {st[6]:0}"); }
+                    Console.WriteLine($"{years} năm trong {swE.ElapsedMilliseconds} ms");
+                    return 0;
+                }
+            for (int i = 0; i < args.Length; i++)
                 if (args[i] == "--city")
                 {
                     var wc = new WorldConfig { Seed = seed, CellCount = 20000 };

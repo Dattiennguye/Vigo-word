@@ -92,6 +92,8 @@ namespace Vigo.Core
         public int LandCells;
         public long Population;
         public bool HasPort;
+        /// <summary>Mất hết tỉnh = mất nước (game over nếu là nước của người chơi).</summary>
+        public bool Eliminated;
         public float CentroidX, CentroidY;
     }
 

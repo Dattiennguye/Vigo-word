@@ -7,7 +7,7 @@ Game mô phỏng xây dựng quốc gia, quản lý thành phố, kinh tế, cô
 - [TDD – Technical Design Document v1.0](docs/TDD.md)
 
 ## Trạng thái
-Giai đoạn 1 (World Generator): [docs/PHASE1.md](docs/PHASE1.md). Giai đoạn 2 (City Builder, lõi mô phỏng): [docs/PHASE2.md](docs/PHASE2.md). Cả hai đã có lõi chạy được và có test; chưa có lớp Unity. Bước tiếp theo: Technical Spike Unity (Windows + Android) hoặc Giai đoạn 3 – Economy.
+Giai đoạn 1 (World Generator): [docs/PHASE1.md](docs/PHASE1.md). Giai đoạn 2 (City Builder, lõi mô phỏng): [docs/PHASE2.md](docs/PHASE2.md). Giai đoạn 3 (Kinh tế): [docs/PHASE3.md](docs/PHASE3.md). Cả ba đã có lõi chạy được và có test (34 test); chưa có lớp Unity. Bước tiếp theo: AI quốc gia + quân sự/ngoại giao, hoặc Technical Spike Unity (Windows + Android). Trạng thái bàn giao: [docs/STATUS.md](docs/STATUS.md).
 
 ## Chạy thử lõi sinh thế giới
 ```bash
