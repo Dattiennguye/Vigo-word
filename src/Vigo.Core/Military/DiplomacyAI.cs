@@ -16,7 +16,8 @@ namespace Vigo.Core.Military
         public void Think()
         {
             var S = _war.Eco.S; var W = _war.W;
-            if (Treaties && S.Week % 26 == 0) ThinkTreaties();
+            _war.PruneOffers();
+            if (Treaties && S.Week % 26 == 0) { ThinkTreaties(); ThinkOffers(); }
             if (S.Week % Interval != 0) return;
             foreach (var c in W.Countries)
             {
@@ -37,6 +38,28 @@ namespace Vigo.Core.Military
                     if (ratio >= 1.8 && ratio > best) { best = ratio; target = n; }
                 }
                 if (target != null) _war.DeclareWar(c.Id, target.Id);
+            }
+        }
+
+        /// <summary>
+        /// Mỗi 26 tuần: AI gửi đề nghị tới người chơi. Liên minh: AI mến người chơi (thiện cảm ≥ 30), là láng giềng, AI chưa đủ 3 đồng minh;
+        /// hiệp ước không xâm lược: AI hiếu chiến yếu hơn nhiều so với người chơi (sợ bị tấn công) hoặc thiện cảm ≥ 10. Mỗi AI tối đa 1 đề nghị chờ tới 1 người chơi.
+        /// </summary>
+        private void ThinkOffers()
+        {
+            var W = _war.W;
+            foreach (int h in _human.OrderBy(v => v))
+            {
+                var hc = W.Countries[h]; if (hc.Eliminated) continue;
+                foreach (var nid in hc.Neighbors)
+                {
+                    var c = W.GetCountry(nid); int i = c.Id.Value; if (c.Eliminated || _human.Contains(i) || _war.AtWar(i) ) continue;
+                    if (_war.OffersFor(h).Any(o => o.From == i)) continue;
+                    double op = _war.GetOpinion(i, h);
+                    if (op >= 30 && _war.Allies(i).Count < 3 && _war.SendOffer(c.Id, hc.Id, TreatyType.Alliance)) continue;
+                    bool scared = _war.Power(h) > 1.5 * _war.Power(i);
+                    if ((scared || op >= 10) && op > -10) _war.SendOffer(c.Id, hc.Id, TreatyType.NonAggression);
+                }
             }
         }
 

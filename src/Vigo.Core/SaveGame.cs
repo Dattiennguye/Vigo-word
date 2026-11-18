@@ -16,7 +16,7 @@ namespace Vigo.Core
     /// </summary>
     public static class SaveGame
     {
-        public const int Version = 5;
+        public const int Version = 6;
         private const uint Magic = 0x4F474956; // "VIGO"
 
         public sealed class SaveException : Exception { public SaveException(string m) : base(m) { } }
@@ -116,6 +116,7 @@ namespace Vigo.Core
                 b.Write(war.Treaties.Count); foreach (var t in war.Treaties) { b.Write((byte)t.Type); b.Write(t.A); b.Write(t.B); b.Write(t.StartWeek); b.Write(t.Expire); }
                 int ncd = war.Delta.GetLength(0); b.Write(ncd); for (int i = 0; i < ncd; i++) for (int j = 0; j < ncd; j++) b.Write(war.Delta[i, j]);
                 var hc = war.HumanCountries.OrderBy(v => v).ToList(); b.Write(hc.Count); foreach (int v in hc) b.Write(v);
+                b.Write(war.NextOfferId); b.Write(war.Offers.Count); foreach (var o in war.Offers) { b.Write(o.Id); b.Write((byte)o.Type); b.Write(o.From); b.Write(o.To); b.Write(o.Week); b.Write(o.Expire); }
                 b.Write(war.Events.Count); foreach (var ev in war.Events) { b.Write(ev.Week); b.Write(ev.Kind); b.Write(ev.A); b.Write(ev.B); b.Write(ev.Text); }
             }
             int nc2 = cities == null ? 0 : cities.Count; b.Write(nc2);
@@ -200,6 +201,7 @@ namespace Vigo.Core
                 int ntr = r.ReadInt32(); for (int i = 0; i < ntr; i++) war.Treaties.Add(new Treaty { Type = (TreatyType)r.ReadByte(), A = r.ReadInt32(), B = r.ReadInt32(), StartWeek = r.ReadInt32(), Expire = r.ReadInt32() });
                 int ncd = r.ReadInt32(); if (ncd != war.Delta.GetLength(0)) throw new SaveException("ma trận thiện cảm không khớp"); for (int i = 0; i < ncd; i++) for (int j = 0; j < ncd; j++) war.Delta[i, j] = r.ReadDouble();
                 int nh = r.ReadInt32(); for (int i = 0; i < nh; i++) war.HumanCountries.Add(r.ReadInt32());
+                war.NextOfferId = r.ReadInt32(); int nof = r.ReadInt32(); if (nof < 0 || nof > 100000) throw new SaveException("số đề nghị không hợp lệ"); for (int i = 0; i < nof; i++) war.Offers.Add(new Offer { Id = r.ReadInt32(), Type = (TreatyType)r.ReadByte(), From = r.ReadInt32(), To = r.ReadInt32(), Week = r.ReadInt32(), Expire = r.ReadInt32() });
                 int ne = r.ReadInt32(); for (int i = 0; i < ne; i++) war.Events.Add(new GameEvent { Week = r.ReadInt32(), Kind = r.ReadString(), A = r.ReadInt32(), B = r.ReadInt32(), Text = r.ReadString() });
             }
             cities = new List<CityEntry>();
