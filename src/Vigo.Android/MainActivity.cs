@@ -10,7 +10,6 @@ using Android.Webkit;
 using Java.Interop;
 using Vigo.Api;
 
-[assembly: Application(Label = "VIGO Empire", Icon = "@mipmap/appicon")]
 
 namespace Vigo.Android
 {
