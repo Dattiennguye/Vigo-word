@@ -16,6 +16,8 @@
     <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
     <AndroidLinkMode>None</AndroidLinkMode>
     <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
