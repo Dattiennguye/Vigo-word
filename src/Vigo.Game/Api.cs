@@ -162,10 +162,10 @@ namespace Vigo.Game
             return new
             {
                 id = id.Value, name = city.Name, size = sim.Size, week = sim.Week,
-                water = Water(sim),
+                water = Water(sim), slope = Slope(sim), seed = id.Value * 7919 + 13,
                 nodes = sim.Nodes.Select(n => new[] { R1(n.X), R1(n.Y) }),
-                edges = sim.Edges.Where(e => e.Alive).Select(e => new[] { e.A, e.B, (int)e.Type, e.IsBridge ? 1 : 0 }),
-                parcels = sim.Parcels.Where(p => p.Alive).Select(p => new[] { R1(p.X), R1(p.Y), (int)p.Zone, p.Building }),
+                edges = sim.Edges.Where(e => e.Alive).Select(e => new[] { e.A, e.B, (int)e.Type, e.IsBridge ? 1 : 0, e.Id }),
+                parcels = sim.Parcels.Where(p => p.Alive).Select(p => new double[] { R1(p.X), R1(p.Y), (int)p.Zone, p.Building, p.EdgeId }),
                 buildings = sim.Buildings.Where(b => b.Alive).Select(b => new[] { b.Id, (int)b.Kind, b.Level, b.Parcel, b.Residents, b.Workers }),
                 indicators = new { pop = i.Population, housing = i.Housing, jobs = i.Jobs, employed = i.Employed, unemployment = R3(i.UnemploymentRate), demandR = R3(i.DemandR), demandC = R3(i.DemandC), demandI = R3(i.DemandI), qol = R3(i.QoL), qolLow = R3(i.QoLLowestQuintile), health = R3(i.Health), education = R3(i.Education), safety = R3(i.Safety), commute = R3(i.Commute), environment = R3(i.Environment), leisure = R3(i.Leisure), pollution = R3(i.Pollution), crime = R3(i.Crime) }
             };
@@ -177,6 +177,14 @@ namespace Vigo.Game
             var l = new List<int>(); int step = 20; int n = (int)(sim.Size / step);
             for (int gy = 0; gy < n; gy++) for (int gx = 0; gx < n; gx++) if (sim.Terrain.IsWater(gx * step + step / 2f, gy * step + step / 2f)) l.Add(gy * n + gx);
             return new { step, n, cells = l };
+        }
+
+        // Độ dốc địa hình (lưới 20 m, 0..100) để vẽ đồi núi; chỉ phục vụ hiển thị.
+        private static int[] Slope(CitySim sim)
+        {
+            int step = 20, n = (int)(sim.Size / step); var a = new int[n * n];
+            for (int gy = 0; gy < n; gy++) for (int gx = 0; gx < n; gx++) a[gy * n + gx] = (int)Math.Round(100 * Math.Max(0f, Math.Min(1f, sim.Terrain.Slope(gx * step + step / 2f, gy * step + step / 2f))));
+            return a;
         }
 
         public static object State(GameSession g)

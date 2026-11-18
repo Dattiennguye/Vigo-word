@@ -62,3 +62,11 @@ Dat không muốn dùng Unity → giao diện HTML5 Canvas (isometric hoạt hì
 
 ## Sau đó
 GĐ6 (còn lại): thuế/sản xuất riêng của thành phố; giao diện chơi được tự dựng; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+
+
+## Đồ hoạ thành phố (v2)
+- Địa hình đồi núi (đá/tuyết theo độ cao), vành đai cảnh quan 400 m với rừng cây, núi xa; sông có bãi cát, vách đất.
+- Đường: vỉa hè, vạch kẻ theo loại, vạch qua đường, cột đèn, cầu có lan can + trụ; xe hơi/xe tải và người đi bộ chạy theo mạng đường (số lượng theo dân số).
+- Công trình nhiều biến thể (nhà ở, cao ốc, cửa hàng mái hiên, nhà máy ống khói có khói, trường, bệnh viện, công an, công viên).
+- Lớp tĩnh được cache ra canvas phụ (kéo bản đồ mượt); xe/nước/khói vẽ động ~30 fps.
+- Tự vẽ bằng canvas, tham khảo bố cục các game xây thành phố, không sao chép tài nguyên.
