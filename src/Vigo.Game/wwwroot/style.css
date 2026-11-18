@@ -158,3 +158,47 @@ h3,h4,.who b,#citybar b,.sub,#tabs button,.btn.big{font-family:"Cormorant SC","E
 .btn,#tabs button{font-weight:700}
 b,strong{font-weight:700}
 #tabs button{font-size:14px!important;letter-spacing:0;padding:7px 0;white-space:nowrap}
+
+/* ===== Chế độ điện thoại (body.m): bản đồ toàn màn hình, nút tròn ở mép, bảng trượt ra ===== */
+#drawerx{display:none}
+#speedbox{display:flex;gap:10px;align-items:center}
+#tabs .ti{display:none}
+body.m #game{display:block}
+body.m #stage{position:absolute;inset:0}
+body.m #topbar{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:auto;max-width:calc(100% - 150px);gap:6px;padding:4px 12px;border:2px solid #b08a3a;border-radius:8px;background:linear-gradient(#4a3a28ee,#33261aee);box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:6}
+body.m #topbar .who b{display:none}
+body.m #topbar .who span{font-size:15px;color:#f3e6c4}
+body.m #topbar .spacer{display:none}
+body.m .flagchip{width:34px;height:24px}
+body.m .stat{font-size:17px;padding:2px 8px;white-space:nowrap}
+body.m #tabs{position:absolute;left:8px;top:50%;transform:translateY(-50%);flex-direction:column;gap:10px;padding:0;background:none;border:none;z-index:7}
+body.m #tabs button{width:58px;height:58px;border-radius:50%;border:3px solid #b08a3a;background:radial-gradient(circle at 35% 30%,#7a6244,#33261a);color:#f3e6c4;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.5);position:relative}
+body.m #tabs button.on{background:radial-gradient(circle at 35% 30%,#e0bb62,#a67c2c);color:#2a1d12}
+body.m #tabs .ti{display:block;font-size:24px;line-height:1}
+body.m #tabs .tl{display:block;font-size:10px!important;line-height:1;margin-top:2px;letter-spacing:0}
+body.m #tabs .badge{top:-4px;right:-4px;font-size:13px}
+body.m #speedbox{position:absolute;right:8px;bottom:8px;display:flex;gap:8px;z-index:7}
+body.m #speedbox .btn.icon{width:54px;height:54px;border-radius:50%;font-size:22px;border:3px solid #b08a3a;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+body.m #side{position:absolute;top:0;bottom:0;right:0;width:min(52vw,460px);border-left:3px solid #b08a3a;transform:translateX(105%);transition:transform .22s ease;z-index:9;box-shadow:-8px 0 24px rgba(0,0,0,.5)}
+body.m.drawer #side{transform:none}
+body.m #drawerx{display:flex;align-items:center;justify-content:center;position:absolute;top:6px;right:8px;width:44px;height:44px;border-radius:50%;z-index:2}
+body.m #panel{padding:12px 12px 24px;padding-top:58px}
+body.m .btn{min-height:44px}
+body.m .acts .btn,body.m .btn.small{min-height:42px;padding:8px 14px;font-size:17px}
+body.m .crow{padding:10px}
+body.m #provcard{left:80px;bottom:8px;width:min(340px,calc(100% - 300px));padding:10px 12px}
+body.m #provcard .acts .btn{font-size:16px}
+body.m #toast{top:62px}
+body.m #tooltip{display:none}
+body.m .pick-hint{left:50%!important;top:8px;transform:translateX(-50%);width:min(560px,92vw)}
+/* thành phố trên điện thoại */
+body.m #citybar{height:50px;padding:4px 8px}
+body.m #cityback{font-size:15px;padding:6px 10px}
+body.m #citytools{left:8px;right:8px;top:auto;bottom:6px;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;max-height:none;padding:6px;gap:6px;-webkit-overflow-scrolling:touch}
+body.m #citytools .grp{writing-mode:vertical-rl;transform:rotate(180deg);margin:0 2px;font-size:11px;white-space:nowrap;flex:none}
+body.m #citytools .btn{flex:none;white-space:nowrap;min-height:40px;font-size:14px;padding:4px 10px}
+body.m #cityhud{top:56px;right:8px;width:auto;min-width:150px;max-height:56px;overflow:hidden;padding:6px 10px;font-size:13px;cursor:pointer}
+body.m #cityhud.open{max-height:calc(100% - 150px);overflow-y:auto;width:240px}
+body.m #cityhud .big{font-size:22px}
+body.m #citymsg{bottom:84px;max-width:80%;font-size:15px}
+body.m #cityspeed .btn.icon{width:48px;height:42px}

@@ -54,7 +54,7 @@ $('pickgo').onclick = async () => {
 async function startPlay() {
   UI.picking = false; $('pick').classList.add('hidden'); $('topbar').style.visibility = 'visible'; $('tabs').style.display = 'flex'; WorldView.selCountry = -1; WorldView.pulse = false;
   WorldView.player = UI.info.player; const st = await api.get('/api/state'); applyState(st, true); const c = UI.info.countries[st.player]; WorldView.focus(c.cx, c.cy, WorldView.minS * 1.8);
-  WorldView.onPick = onMapPick; setTab('nation'); setSpeed(0);
+  WorldView.onPick = onMapPick; setTab('nation', true); UI.opened = true; setSpeed(0);
   let seen = false; try { seen = localStorage.getItem('vigo_tut') === '1'; } catch (e) { }
   if (!seen) {
     showModal(`<h3>Chào mừng, nhà lãnh đạo!</h3><p>Không có chiến thắng ở đây — chỉ có <b>cuộc sống của người dân</b> tốt hơn hay tệ hơn.</p>
@@ -106,8 +106,22 @@ function gameOver() {
 }
 
 // ---------------- bảng điều khiển ----------------
-document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
-function setTab(t) { UI.tab = t; UI.sig = {}; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); $('panel').innerHTML = ''; UI.built = false; renderPanel(); }
+document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
+  if (isMobile()) { if (document.body.classList.contains('drawer') && UI.tab === b.dataset.tab) { closeDrawer(); return; } openDrawer(); }
+  setTab(b.dataset.tab, true);
+});
+// ---- chế độ điện thoại: bản đồ toàn màn hình, bảng điều khiển trượt ra từ mép phải ----
+function isMobile() { return document.body.classList.contains('m'); }
+function openDrawer() { document.body.classList.add('drawer'); }
+function closeDrawer() { document.body.classList.remove('drawer'); }
+function applyMode() {
+  const m = innerWidth < 1100 || (matchMedia && matchMedia('(pointer:coarse)').matches); document.body.classList.toggle('m', m);
+  const tabs = $('tabs'), side = $('side'), game = $('game'); if (m && tabs.parentNode !== game) game.appendChild(tabs); else if (!m && tabs.parentNode !== side) side.insertBefore(tabs, side.firstChild);
+  const sb = $('speedbox'), tb = $('topbar'); if (m && sb.parentNode !== game) game.appendChild(sb); else if (!m && sb.parentNode !== tb) tb.appendChild(sb);
+  if (!m) closeDrawer(); setTimeout(() => { try { WorldView.resize && WorldView.resize(); } catch (e) { } }, 50);
+}
+window.addEventListener('resize', applyMode); applyMode(); $('drawerx').onclick = closeDrawer;
+function setTab(t, user) { if (!user && isMobile() && UI.opened) openDrawer(); UI.tab = t; UI.sig = {}; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); $('panel').innerHTML = ''; UI.built = false; renderPanel(); }
 function renderPanel() { const t = UI.tab; if (t === 'nation') renderNation(); else if (t === 'diplo') renderDiplo(); else if (t === 'news') renderNews(); else renderCities(); }
 
 const barRow = (id, n, c) => `<div class="barrow"><span>${n}</span><div class="bar"><i id="${id}" style="width:0;background:${c}"></i></div><b id="${id}v"></b></div>`;
@@ -195,6 +209,7 @@ function renderCities() {
 
 // ---------------- chọn trên bản đồ ----------------
 function onMapPick(p) {
+  if (isMobile()) closeDrawer();
   const st = UI.state; $('provcard').classList.add('hidden'); WorldView.selProv = -1;
   if (p.city >= 0) { const c = UI.info.cities[p.city]; const cs = st.cities[p.city]; return cityCard(c, cs); }
   if (p.prov >= 0) { WorldView.selProv = p.prov; provCard(p.prov); } WorldView.dirty = true;
@@ -204,7 +219,7 @@ function provCard(pid) {
   const pops = st.cities.filter((c) => UI.info.cities[c.id].prov === pid).reduce((a, c) => a + c.pop, 0);
   $('provcard').innerHTML = `<h3>${pr.name}</h3><div class="kv"><span>Thuộc về</span><b>${oc.name}${mine ? ' (bạn)' : ''}</b></div><div class="kv"><span>Dân thành thị</span><b>${fmt(pops)}</b></div>`
     + (!mine ? `<div class="kv"><span>Quan hệ</span><b>${live.opinion > 0 ? '+' : ''}${live.opinion}${live.atWar ? ' · đang đánh nhau' : ''}</b></div><div class="acts"><button class="btn blue" id="pc_d">Ngoại giao</button></div>` : '');
-  $('provcard').classList.remove('hidden'); const b = $('pc_d'); if (b) b.onclick = () => { UI.openC = o; setTab('diplo'); };
+  $('provcard').classList.remove('hidden'); const b = $('pc_d'); if (b) b.onclick = () => { UI.openC = o; if (isMobile()) openDrawer(); setTab('diplo', true); };
 }
 function cityCard(c, cs) {
   const mine = cs.owner === UI.state.player; const oc = UI.info.countries[cs.owner];

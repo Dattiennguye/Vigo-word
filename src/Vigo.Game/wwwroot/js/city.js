@@ -40,7 +40,7 @@ const CityView = {
     h += '<div class="grp">Phân khu</div>' + [1, 2, 3, 4].map((z) => `<button class="btn" data-k="zone" data-v="${z}"><span style="display:inline-block;width:12px;height:12px;border:2px solid #3b2a18;border-radius:4px;background:${ZONE[z].col}"></span> ${ZONE[z].name}</button>`).join('');
     h += '<div class="grp">Dịch vụ</div>' + SERVICE.map((s) => `<button class="btn" data-k="service" data-v="${s.i}">${s.name}</button>`).join('');
     h += '<div class="grp">Khác</div><button class="btn" data-k="demolish">💥 Phá bỏ</button>';
-    t.innerHTML = h; t.querySelectorAll('button').forEach((b) => b.onclick = () => { this.tool = { kind: b.dataset.k, v: +(b.dataset.v || 0) }; t.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b)); this.say(this.toolHelp()); });
+    t.innerHTML = h; $('cityhud').onclick = () => $('cityhud').classList.toggle('open'); t.querySelectorAll('button').forEach((b) => b.onclick = () => { this.tool = { kind: b.dataset.k, v: +(b.dataset.v || 0) }; t.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b)); this.say(this.toolHelp()); });
   },
   toolHelp() { const k = this.tool.kind; return k === 'road' ? 'Nhấn giữ và kéo từ điểm đầu đến điểm cuối để xây đường' : k === 'zone' ? 'Bấm hoặc quét chuột để quy hoạch khu vực quanh con đường' : k === 'service' ? 'Bấm gần một con đường để đặt công trình' : k === 'demolish' ? 'Bấm vào công trình/lô đất để phá' : 'Kéo để di chuyển, lăn chuột để phóng to'; },
   say(t) { $('citymsg').textContent = t || ''; },
