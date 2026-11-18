@@ -12,12 +12,15 @@ namespace Vigo.Core.Military
         public void SetHuman(CountryId c, bool human) { if (human) { _human.Add(c.Value); _war.HumanCountries.Add(c.Value); } else { _human.Remove(c.Value); _war.HumanCountries.Remove(c.Value); } }
         /// <summary>Bật/tắt AI tự lập liên minh và hiệp ước (để so sánh trong thử nghiệm).</summary>
         public bool Treaties = true;
+        /// <summary>Bật/tắt việc AI thắng thế tự áp điều kiện hòa đàm (nhượng tỉnh biên giới + bồi thường) qua WarSim.ProposeTerms.</summary>
+        public bool Terms = true;
 
         public void Think()
         {
             var S = _war.Eco.S; var W = _war.W;
             _war.PruneOffers();
             if (Treaties && S.Week % 26 == 0) { ThinkTreaties(); ThinkOffers(); }
+            if (Terms && S.Week % 13 == 6) ThinkTerms();
             if (S.Week % Interval != 0) return;
             foreach (var c in W.Countries)
             {
@@ -38,6 +41,28 @@ namespace Vigo.Core.Military
                     if (ratio >= 1.8 && ratio > best) { best = ratio; target = n; }
                 }
                 if (target != null) _war.DeclareWar(c.Id, target.Id);
+            }
+        }
+
+        /// <summary>
+        /// Mỗi 13 tuần: bên AI áp đảo (sức mạnh ≥ 1,5× đối phương, chiến tranh đã ≥ 26 tuần) đòi các tỉnh biên giới của đối phương
+        /// (không đòi thủ đô nếu tỷ lệ &lt; 3) với số tỉnh ≤ trần cho phép và bồi thường 50% trần. Không áp lên nước người chơi.
+        /// </summary>
+        private void ThinkTerms()
+        {
+            var W = _war.W; var S = _war.Eco.S;
+            foreach (var war in _war.Wars.ToList())
+            {
+                if (!_war.Wars.Contains(war) || S.Week - war.StartWeek < 26) continue;
+                int x = war.A, y = war.B;
+                if (_war.Power(y) > _war.Power(x)) { int t = x; x = y; y = t; }
+                if (_human.Contains(x) || _human.Contains(y) || W.Countries[x].Eliminated || W.Countries[y].Eliminated) continue;
+                double ratio = _war.Power(x) / Math.Max(1e-9, _war.Power(y)); if (ratio < 1.5) continue;
+                var L = W.Countries[y]; int maxCede = Math.Max(1, (int)Math.Floor(0.12 * (ratio - 1) * L.Provinces.Count));
+                var border = L.Provinces.Where(p => _war.ProvNeighbors[p.Value].Any(n => W.Provinces[n].Owner.Value == x) && (p != L.CapitalProvince || ratio >= 3)).Take(Math.Min(maxCede, 3)).ToList();
+                if (border.Count == 0 || border.Count >= L.Provinces.Count) continue;
+                double cap = 10 * S.TaxRate[y] * _war.Eco.PotentialVA(y);
+                _war.ProposeTerms(new CountryId(x), new CountryId(y), border, 0.5 * cap);
             }
         }
 

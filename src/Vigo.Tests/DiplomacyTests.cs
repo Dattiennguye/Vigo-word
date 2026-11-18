@@ -148,6 +148,23 @@ namespace Vigo.Tests
                 }
                 Console.Write($" [tổng nước còn sau 60 năm: có liên minh {aliveT} vs không {aliveN}]");
             });
+
+            add("AI áp điều kiện hòa đàm: bên thắng thế nhận tỉnh biên giới + bồi thường; bất biến thế giới giữ nguyên; không áp lên người chơi; tắt Terms thì không có", () =>
+            {
+                int Run(bool terms, bool human, out int humanLoss)
+                {
+                    var (w, e, war) = Make(75); var ai = new CountryAI(e) { War = war }; var dip = new DiplomacyAI(war) { Aggression = 0.6, Terms = terms };
+                    var h = w.Countries[2]; if (human) dip.SetHuman(h.Id, true); int hp = h.Provinces.Count; int n = 0, seenTerms = 0;
+                    for (int i = 0; i < 1500; i++) { e.StepWeek(); war.StepWeek(); ai.Think(); dip.Think(); }
+                    foreach (var ev in war.Events) if (ev.Kind == "terms") { seenTerms++; if (human && ev.B == h.Id.Value) n++; }
+                    MilitaryTests.Invariants(w, assert); humanLoss = n; return seenTerms;
+                }
+                int on = Run(true, true, out int hl), off = Run(false, true, out int hl2);
+                Console.Write($" [điều kiện hòa đàm: bật {on}, tắt {off}]");
+                assert(on > 0, "AI không bao giờ áp điều kiện hòa đàm");
+                assert(off == 0, "tắt Terms mà vẫn có điều kiện hòa đàm (từ nguồn khác?)");
+                assert(hl == 0, "AI áp điều kiện hòa đàm lên nước người chơi");
+            });
         }
     }
 }

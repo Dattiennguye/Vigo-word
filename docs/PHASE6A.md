@@ -18,3 +18,9 @@ Trước đây AI bỏ qua nước người chơi khi lập liên minh. Giờ AI
 - Các ngưỡng 30/10/1,5×/−3 là tham số tôi đặt, chưa hiệu chỉnh theo trải nghiệm chơi.
 - Người chơi chưa thể *yêu cầu* AI điều khoản cụ thể (chỉ chấp nhận/từ chối); AI chưa dùng `ProposeTerms`.
 - Chưa có giao diện — lớp Unity sẽ hiển thị hộp thư đề nghị.
+
+## AI áp điều kiện hòa đàm (`DiplomacyAI.Terms`, mặc định bật)
+- Mỗi 13 tuần, với chiến tranh đã ≥ 26 tuần mà một bên AI có sức mạnh ≥ 1,5× bên kia: bên mạnh gọi `WarSim.ProposeTerms` đòi tối đa 3 tỉnh biên giới của đối phương (đủ trần `ProposeTerms` cho phép; thủ đô chỉ khi tỷ lệ ≥ 3) và bồi thường 50% trần.
+- Không áp lên nước người chơi (cả hai chiều); với người chơi vẫn dùng `ProposePeace`/`ProposeTerms` thủ công.
+- Đo: seed 75, 1500 tuần, 10 lần áp điều kiện (tắt: 0); bất biến thế giới giữ nguyên.
+- Hạn chế: bên thua AI bị áp đặt, không thương lượng; ngưỡng 1,5×/26 tuần/50% là tham số tôi đặt.

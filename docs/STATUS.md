@@ -49,7 +49,7 @@ Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,bre
 `link.ResetReports()` / `link.Report(sim, cityId)` → `EconomySim.CityLabourMod/CityGrowthAdj` (QoL × tỷ trọng thành phố trong tỉnh).
 
 ## GĐ6a – AI đề nghị liên minh/hiệp ước tới người chơi (XONG, 77 test pass) — xem docs/PHASE6A.md
-`war.OffersFor(h)`, `AcceptOffer/DeclineOffer(id)`; AI gửi qua `DiplomacyAI` mỗi 26 tuần. SaveGame phiên bản 6.
+`war.OffersFor(h)`, `AcceptOffer/DeclineOffer(id)`; AI gửi qua `DiplomacyAI` mỗi 26 tuần. SaveGame phiên bản 6. `DiplomacyAI.Terms`: AI thắng thế tự áp điều kiện hòa đàm (78 test).
 
 ## Sau đó
-GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, hải quân, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
