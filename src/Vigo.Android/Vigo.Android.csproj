@@ -19,6 +19,8 @@
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <CheckEolWorkloads>false</CheckEolWorkloads>
+    <NoWarn>$(NoWarn);NETSDK1202</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Vigo.Core\Vigo.Core.csproj" />
