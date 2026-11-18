@@ -7,6 +7,9 @@ File này để lần sau (người hoặc Claude) đọc là tiếp tục đư�
 - Mất nước = game over (lãnh đạo bị xử lý), phải chơi lại; bắt buộc có hệ thống save/rewind.
 - Nguyên tắc GDD: không dữ liệu giả, module nối bằng dữ liệu thật, mô phỏng phân cấp ưu tiên hiệu năng.
 
+## Định hướng đồ họa (Dat, 2026-11-18)
+Chỉ cần kiểu isometric hoạt hình, màu tươi, khối đơn giản như game SLG mobile (ảnh mẫu quảng cáo "Kỷ Nguyên Băng Hà: 3Q" làm THAM KHẢO phong cách, không sao chép tài sản/nhân vật của game đó). Phù hợp Android tầm trung: low-poly/sprite isometric, ít chi tiết, ưu tiên hiệu năng. Việc dựng đồ họa nằm ở lớp Unity (chưa làm); lõi mô phỏng không phụ thuộc đồ họa.
+
 ## Đã xong GĐ1–2 (đã push)
 - GĐ1 World Generator (docs/PHASE1.md), GĐ2 City Builder (docs/PHASE2.md). TDD: docs/TDD.md.
 - Lệnh: `cd src && dotnet run --project Vigo.Tests` (thêm `--seeds N`); `dotnet run --project Vigo.Cli -- --seed S --out out [--city capital|port]`.
@@ -26,6 +29,9 @@ Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất n
 
 ## Lưu/nạp/quay lại (XONG, 37 test pass) — xem docs/SAVE.md
 `SaveGame.ToBytes/FromBytes/Save/Load(world, eco)`, `RewindBuffer(n).Push/Rewind(week)`. Chưa lưu CitySim.
+
+## GĐ4a – AI quốc gia (XONG, 42 test pass) — xem docs/PHASE4A.md
+`new CountryAI(eco)`, gọi `ai.Think()` sau mỗi `eco.StepWeek()`; `SetHuman(c,true)` cho nước người chơi. Phát hiện: tăng thuế chữa nợ phản tác dụng; AI chưa "tối ưu hơn" chính sách cố định, chỉ đa dạng hành vi. Tiếp theo (4b): quân đội, ngoại giao, chiến tranh, mở rộng.
 
 ## Sau đó
 GĐ4: AI quốc gia (ngân sách, mở rộng, ngoại giao), quân sự, chiến tranh dùng TransferProvince; nối QoL thành phố ↔ kinh tế quốc gia; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

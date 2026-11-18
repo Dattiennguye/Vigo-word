@@ -38,6 +38,44 @@ namespace Vigo.Cli
                     return 0;
                 }
             for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--aidiag")
+                {
+                    var combos = new (string, bool, bool, bool, bool, bool)[] { ("không AI", false, false, false, false, false), ("AI đủ", true, true, true, true, true), ("chỉ thuế", true, true, false, false, false), ("chỉ thắt lưng", true, false, true, false, false), ("chỉ đầu tư", true, false, false, true, false), ("chỉ tính cách", true, false, false, false, true) };
+                    foreach (var cb in combos)
+                    {
+                        double debt = 0, life = 0, va = 0; int hungry = 0;
+                        foreach (ulong sd in new ulong[] { 101, 202, 303 })
+                        {
+                            var wd = WorldGenerator.Generate(new WorldConfig { Seed = sd, CellCount = 20000 }); var ec = new Vigo.Core.Economy.EconomySim(wd);
+                            var ai = cb.Item2 ? new Vigo.Core.AI.CountryAI(ec) { Austerity = cb.Item4, SmartInvest = cb.Item5, PersonalityBudget = cb.Item6 } : null;
+                            for (int wk = 0; wk < 1560; wk++) { ec.StepWeek(); ai?.Think(); }
+                            for (int c = 0; c < wd.Countries.Count; c++) { var d = ec.S.Indicators[c]; debt += System.Math.Max(0, -ec.S.Treasury[c]) / System.Math.Max(1, d.Population); life += (d.FoodSat + d.FuelSat + d.GoodsSat + d.Health + d.Edu) / 5; va += d.ValueAdded / System.Math.Max(1, d.Population); if (d.FoodSat < 0.9) hungry++; }
+                        }
+                        Console.WriteLine($"{cb.Item1,-14} nợ/người={debt:0.0}  đời sống={life / 90:0.00}  GDP/người={va / 90:0.00}  nước đói={hungry}");
+                    }
+                    return 0;
+                }
+            for (int i = 0; i < args.Length; i++)
+                if (args[i] == "--aishock")
+                {
+                    foreach (bool useAi in new[] { false, true })
+                    {
+                        double fs = 0, fcap = 0, debt = 0; int n = 0;
+                        foreach (ulong sd in new ulong[] { 101, 202, 303 })
+                        {
+                            var wd = WorldGenerator.Generate(new WorldConfig { Seed = sd, CellCount = 20000 }); var ec = new Vigo.Core.Economy.EconomySim(wd);
+                            var ai = useAi ? new Vigo.Core.AI.CountryAI(ec) : null;
+                            for (int wk = 0; wk < 104; wk++) { ec.StepWeek(); ai?.Think(); }
+                            var hit = new System.Collections.Generic.List<Country>(); for (int c = 0; c < 6; c++) hit.Add(wd.Countries[c]);
+                            double cap0 = 0; foreach (var c in hit) { foreach (var p in c.Provinces) { cap0 += ec.S.FarmCap[p.Value]; ec.DamageProvince(p, 0.6); } foreach (var o in wd.Countries) if (o.Id != c.Id) ec.SetTradeBlock(c.Id, o.Id, true); }
+                            for (int wk = 0; wk < 520; wk++) { ec.StepWeek(); ai?.Think(); if (wk == 104) foreach (var c in hit) foreach (var o in wd.Countries) ec.SetTradeBlock(c.Id, o.Id, false); }
+                            foreach (var c in hit) { var d = ec.S.Indicators[c.Id.Value]; fs += d.FoodSat; double fc = 0; foreach (var p in c.Provinces) fc += ec.S.FarmCap[p.Value]; fcap += fc / System.Math.Max(1, d.Population); debt += System.Math.Max(0, -ec.S.Treasury[c.Id.Value]) / System.Math.Max(1, d.Population); n++; }
+                        }
+                        Console.WriteLine($"{(useAi ? "có AI " : "không AI")}  sau 10 năm: ăn đủ={fs / n:P0}  công suất nông nghiệp/người={fcap / n:0.00}  nợ/người={debt / n:0.0}");
+                    }
+                    return 0;
+                }
+            for (int i = 0; i < args.Length; i++)
                 if (args[i] == "--econ")
                 {
                     int years = int.Parse(args[i + 1]);

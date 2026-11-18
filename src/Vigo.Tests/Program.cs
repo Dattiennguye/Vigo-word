@@ -195,6 +195,7 @@ namespace Vigo.Tests
 
             CityTests.Register(Add, Assert);
             EconomyTests.Register(Add, Assert);
+            AITests.Register(Add, Assert);
 
             int pass = 0, fail = 0;
             foreach (var t in Tests)
