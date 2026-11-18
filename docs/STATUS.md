@@ -45,5 +45,8 @@ Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,bre
 ## Lưu CitySim (XONG, 72 test pass) — xem docs/SAVE.md
 `SaveGame.ToBytes(w, eco, war, cities)` (phiên bản 5), `List<CityEntry>`; nạp rồi chạy tiếp y hệt chạy liền (test). Chỉ FlatTerrain/WorldTerrain; bối cảnh quốc gia không lưu.
 
+## Chiều ngược thành phố → quốc gia (XONG, 73 test pass) — xem docs/PHASE5.md
+`link.ResetReports()` / `link.Report(sim, cityId)` → `EconomySim.CityLabourMod/CityGrowthAdj` (QoL × tỷ trọng thành phố trong tỉnh).
+
 ## Sau đó
-GĐ6 (còn lại): chiều ngược thành phố → quốc gia, AI đề nghị liên minh tới người chơi, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6 (còn lại): thuế/sản xuất riêng của thành phố, AI đề nghị liên minh tới người chơi, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

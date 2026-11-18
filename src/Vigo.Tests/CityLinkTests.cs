@@ -82,6 +82,28 @@ namespace Vigo.Tests
                 var w2 = Gen(84); var e2 = new EconomySim(w2); var war2 = new WarSim(w2, e2); war2.CapturedWeek[3] = 17;
                 SaveGame.FromBytes(SaveGame.ToBytes(w2, e2, war2), out var w3, out var e3, out var war3); assert(war3.CapturedWeek[3] == 17 && war3.CapturedWeek[4] == -1, "CapturedWeek không được lưu");
             });
+
+            add("Chiều ngược: thành phố QoL cao làm tỉnh đông dân/năng suất hơn QoL thấp; thành phố nhỏ ít ảnh hưởng; không Report thì y hệt cũ", () =>
+            {
+                (double pop, double util) Run(float qol, bool report)
+                {
+                    var w = Gen(81); var e = new EconomySim(w); var war = new WarSim(w, e); var link = new CityLink(w, e, war);
+                    var cap = w.GetCity(w.Countries[0].Capital); int p = cap.Province.Value;
+                    cap.Population = (long)(e.S.Pop[p] * 0.5); // thành phố chiếm nửa tỉnh để thấy rõ hiệu ứng
+                    var sim = new CitySim(new FlatTerrain(), 5); DemoScenario.BuildTown(sim); sim.StepWeeks(2);
+                    for (int i = 0; i < 156; i++)
+                    {
+                        e.StepWeek(); war.StepWeek();
+                        if (report) { link.ResetReports(); link.Report(qol, cap.Id); }
+                    }
+                    return (e.S.Pop[p], e.S.Util[p]);
+                }
+                var none = Run(0.5f, false); var high = Run(0.9f, true); var low = Run(0.1f, true); var neutral = Run(0.5f, true);
+                Console.Write($" [dân tỉnh sau 3 năm: không {none.pop:0} | QoL0.9 {high.pop:0} | QoL0.1 {low.pop:0}; Util {high.util:0.00} vs {low.util:0.00}]");
+                assert(high.pop > low.pop * 1.02, "QoL cao không hút dân hơn QoL thấp");
+                assert(high.util >= low.util, "năng suất không theo QoL");
+                assert(Math.Abs(neutral.pop - none.pop) < 1e-6 * none.pop + 1e-6, "QoL trung tính phải không đổi so với không Report");
+            });
         }
     }
 }

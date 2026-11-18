@@ -15,9 +15,12 @@ namespace Vigo.Core.Economy
         private readonly ulong _seed;
         private const double TargetCoverFood = 6, TargetCover = 4;
 
-        public EconomySim(WorldState w) { W = w; _seed = w.Seed; S = EconomyInit.Create(w); }
+        /// <summary>Ảnh hưởng ngược từ thành phố chi tiết (CityLink.Report): hệ số năng suất lao động theo tỉnh (1 = không đổi) và cộng thêm vào tốc độ tăng dân/tuần. Đặt lại mỗi tuần, không lưu.</summary>
+        public double[] CityLabourMod, CityGrowthAdj;
+        private void InitCityHooks() { int n = W.Provinces.Count; CityLabourMod = new double[n]; CityGrowthAdj = new double[n]; for (int i = 0; i < n; i++) CityLabourMod[i] = 1; }
+        public EconomySim(WorldState w) { W = w; _seed = w.Seed; S = EconomyInit.Create(w); InitCityHooks(); }
         /// <summary>Dùng khi nạp bản lưu.</summary>
-        public EconomySim(WorldState w, EconomyState state) { W = w; _seed = w.Seed; S = state; }
+        public EconomySim(WorldState w, EconomyState state) { W = w; _seed = w.Seed; S = state; InitCityHooks(); }
 
         // ================= Lệnh (lớp Command sẽ gọi các hàm này ở GĐ sau) =================
         public void SetTaxRate(CountryId c, double rate) { S.TaxRate[c.Value] = Math.Max(0, Math.Min(0.8, rate)); }
@@ -101,7 +104,7 @@ namespace Vigo.Core.Economy
             {
                 int c = OwnerOf(p); if (c < 0) { S.Util[p] = 0; continue; }
                 double soldiers = cpopArr[c] > 0 ? Math.Min(S.Troops[c], 0.9 * cpopArr[c]) * S.Pop[p] / cpopArr[c] : 0;
-                double lab = Math.Max(0, EconData.LabourShare * S.Pop[p] * (0.85 + 0.3 * S.Health[c]) - soldiers);
+                double lab = Math.Max(0, EconData.LabourShare * S.Pop[p] * (0.85 + 0.3 * S.Health[c]) * CityLabourMod[p] - soldiers);
                 double req = S.FarmCap[p] * EconData.LabourPerUnit[0] + S.ForestCap[p] * EconData.LabourPerUnit[1]
                            + (S.MineBase[p] + S.MineBonus[p]) * EconData.LabourPerUnit[2];
                 for (int s = 0; s < EconData.IndustrySectors; s++) req += S.IndCap[p][s] * EconData.LabourPerUnit[3 + s];
@@ -175,7 +178,7 @@ namespace Vigo.Core.Economy
             {
                 int c = OwnerOf(p); if (c < 0) continue;
                 double foodSat = hhNeed[c][0] > 0 ? hhGot[c][0] / hhNeed[c][0] : 1;
-                double rate = 0.00022 - 0.00012 * (1.4 - 0.5 * S.Health[c]) - (1 - foodSat) * 0.01;
+                double rate = 0.00022 - 0.00012 * (1.4 - 0.5 * S.Health[c]) - (1 - foodSat) * 0.01 + CityGrowthAdj[p];
                 S.Pop[p] = Math.Max(0, S.Pop[p] * (1 + rate));
                 var pr = W.Provinces[p]; pr.Population = (long)S.Pop[p];
             }
