@@ -57,8 +57,8 @@ Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,bre
 ## Hải quân/đổ bộ (XONG, 87 test pass) — xem docs/PHASE6A.md
 `WarSim.SeaLinks/SeaNeighbors/SeaAdjacent`; chiến tranh qua biển cần cảng, đổ bộ yếu hơn đất liền.
 
-## Quyết định mới (Dat, 2026-11-18)
-Không dùng Unity: tôi tự dựng hình ảnh và làm game (xem phần Giao diện bên dưới khi có).
+## Giao diện chơi được (XONG bản đầu) — xem docs/PLAY.md
+Dat không muốn dùng Unity → giao diện HTML5 Canvas (isometric hoạt hình) + máy chủ cục bộ `src/Vigo.Game` gọi `GameSession`. Windows: `Choi-VIGO.bat`. Chưa có Android độc lập (xem PLAY.md). Kiểm thử bằng Playwright chụp ảnh (`tools/smoke_ui.py`).
 
 ## Sau đó
 GĐ6 (còn lại): thuế/sản xuất riêng của thành phố; giao diện chơi được tự dựng; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

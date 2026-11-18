@@ -54,6 +54,13 @@ namespace Vigo.Core
             Link.ResetReports(); foreach (var c in Cities) Link.Report(c.Sim, c.Id);
         }
 
+        /// <summary>Đổi nước người chơi — chỉ trước khi bắt đầu (tuần 0), vì AI đã chưa điều hành nước đó.</summary>
+        public bool ChoosePlayer(CountryId c)
+        {
+            if (Eco.S.Week != 0 || c.Value < 0 || c.Value >= World.Countries.Count || World.GetCountry(c).Eliminated || Cities.Count > 0) return false;
+            Attach(World, Eco, War, Cities, c); return true;
+        }
+
         public bool GameOver => World.GetCountry(Player).Eliminated;
 
         /// <summary>Chạy một tuần. Sau khi mất nước (GameOver) không chạy tiếp; trả về false.</summary>

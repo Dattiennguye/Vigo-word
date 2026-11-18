@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>VIGO: Empire &amp; Civilization</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="start" class="screen">
+  <div class="start-card">
+    <div class="logo">VIGO</div>
+    <div class="sub">Empire &amp; Civilization</div>
+    <p class="tag">Xây quốc gia. Chăm lo cho người dân. Không có chiến thắng — chỉ có cuộc sống tốt hơn.</p>
+    <div class="row"><label>Mã thế giới (seed)</label><input id="seed" type="number" value="12345"><button id="rnd" class="btn small">🎲</button></div>
+    <div class="row"><label>Kích thước bản đồ</label>
+      <select id="cells"><option value="12000">Nhỏ (nhanh)</option><option value="20000" selected>Vừa</option><option value="36000">Lớn</option></select></div>
+    <button id="newgame" class="btn big">Tạo thế giới mới</button>
+    <div id="saveslist" class="saves"></div>
+    <div id="startmsg" class="msg"></div>
+  </div>
+</div>
+
+<div id="pick" class="screen hidden">
+  <div class="pick-hint"><b>Chọn quốc gia của bạn</b> — bấm vào một nước trên bản đồ hoặc trong danh sách.<div id="pickinfo"></div><button id="pickgo" class="btn big" disabled>Bắt đầu cai trị</button></div>
+</div>
+
+<div id="game" class="hidden">
+  <div id="topbar">
+    <div class="flagchip" id="myflag"></div>
+    <div class="who"><b id="cname">—</b><span id="cdate">Năm 1 · tuần 1</span></div>
+    <div class="stat"><span>👥</span><b id="spop">0</b></div>
+    <div class="stat"><span>💰</span><b id="streas">0</b></div>
+    <div class="stat"><span>🌾</span><b id="sfood">0</b></div>
+    <div class="stat"><span>😊</span><b id="sqol">–</b></div>
+    <div class="spacer"></div>
+    <button class="btn icon" id="bpause" title="Tạm dừng">⏸</button>
+    <button class="btn icon" id="bplay1" title="x1">▶</button>
+    <button class="btn icon" id="bplay2" title="x2">⏩</button>
+    <button class="btn icon" id="bplay4" title="x4">⏭</button>
+    <button class="btn icon" id="bmenu" title="Lưu / nạp">💾</button>
+  </div>
+  <div id="stage"><canvas id="world"></canvas>
+    <div id="tooltip" class="hidden"></div>
+    <div id="provcard" class="hidden"></div>
+    <div id="toast"></div>
+  </div>
+  <div id="side">
+    <div id="tabs"><button data-tab="nation" class="on">Quốc gia</button><button data-tab="diplo">Ngoại giao <i id="offerbadge" class="badge hidden">0</i></button><button data-tab="news">Tin tức</button><button data-tab="cities">Thành phố</button></div>
+    <div id="panel"></div>
+  </div>
+</div>
+
+<div id="cityview" class="hidden">
+  <div id="citybar">
+    <button class="btn" id="cityback">← Bản đồ thế giới</button>
+    <b id="cityname"></b>
+    <div class="spacer"></div>
+    <div id="cityspeed">
+      <button class="btn icon" id="cpause">⏸</button><button class="btn icon" id="cplay1">▶</button><button class="btn icon" id="cplay2">⏩</button>
+    </div>
+  </div>
+  <div id="citytools"></div>
+  <canvas id="citycanvas"></canvas>
+  <div id="cityhud"></div>
+  <div id="citymsg"></div>
+  <div id="cityprompt" class="hidden"><div class="start-card"><div class="logo small">Thành phố mới</div><p>Bắt đầu với một thị trấn mẫu hay một khu đất trống?</p><button class="btn big" id="cdemo">Thị trấn mẫu</button><button class="btn" id="cempty">Đất trống</button></div></div>
+</div>
+
+<div id="modal" class="hidden"><div class="modal-card" id="modalcard"></div></div>
+<script src="js/api.js"></script>
+<script src="js/world.js"></script>
+<script src="js/city.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
