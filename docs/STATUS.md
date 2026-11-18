@@ -36,5 +36,8 @@ Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất n
 ## GĐ4b – Quân đội, ngoại giao, chiến tranh (XONG, 52 test pass) — xem docs/PHASE4B.md
 `new WarSim(world, eco)`; mỗi tuần: `eco.StepWeek(); war.StepWeek(); ai.Think(); dip.Think();` (`new CountryAI(eco){War=war}`, `new DiplomacyAI(war)`). Lệnh: `DeclareWar/MakePeace/ProposePeace`, `GameOver(human)`, `Events`. SaveGame.ToBytes(w, eco, war) (phiên bản 2). Hằng số chiến đấu chưa cân bằng theo trải nghiệm chơi.
 
+## GĐ4c – Liên minh, hiệp ước, hòa đàm (XONG, 60 test pass) — xem docs/PHASE4C.md
+Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,breakTreaties)`, `JoinWar`, `ProposeTerms(winner,loser,cede,reparations)`, `GetOpinion`, `Allies`, `Treaties`. `DiplomacyAI{Treaties=true}`; `SetHuman` cho người chơi. SaveGame phiên bản 3. Hằng số chưa cân bằng theo trải nghiệm chơi.
+
 ## Sau đó
-GĐ4c: liên minh/hiệp ước/hòa đàm có điều kiện, hải quân; nối QoL thành phố ↔ kinh tế quốc gia; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ4d: hải quân, AI dùng ProposeTerms, hiệp ước thương mại; nối QoL thành phố ↔ kinh tế quốc gia; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).

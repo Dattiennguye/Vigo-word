@@ -11,6 +11,8 @@ namespace Vigo.Core.Military
         public int StartWeek;
         /// <summary>Mục tiêu chiến tranh của bên tuyên chiến: số tỉnh cần chiếm (thủ đô tính 3). Đạt → hòa.</summary>
         public int Goal, Captured;
+        /// <summary>Chiến tranh do đồng minh tham gia thuộc cuộc chiến chính (MasterA, MasterB); -1 nếu là chiến tranh chính.</summary>
+        public int MasterA = -1, MasterB = -1;
     }
 
     public sealed class GameEvent
@@ -23,7 +25,7 @@ namespace Vigo.Core.Military
     /// Quân số lấy từ ngân sách quốc phòng, hậu cần (nhiên liệu, máy móc) lấy từ tồn kho thật và ghi sổ cái;
     /// chiến sự phá hủy công suất tỉnh, giết dân, và chiếm tỉnh qua WorldOps.TransferProvince.
     /// </summary>
-    public sealed class WarSim
+    public sealed partial class WarSim
     {
         public readonly WorldState W; public readonly EconomySim Eco;
         public readonly List<War> Wars = new List<War>();
@@ -51,6 +53,7 @@ namespace Vigo.Core.Military
                 int a = w.ProvinceOfCell[c]; if (a < 0) continue;
                 foreach (int nb in w.Grid.Neighbors(c)) { int b = w.ProvinceOfCell[nb]; if (b < 0 || b == a) continue; if (seen.Add((long)a * 100000 + b)) ProvNeighbors[a].Add(b); }
             }
+            InitDiplomacy();
             _terrain = new double[NP];
             for (int p = 0; p < NP; p++)
             {
@@ -67,14 +70,28 @@ namespace Vigo.Core.Military
         private void Log(string kind, int a, int b, string text) { Events.Add(new GameEvent { Week = Eco.S.Week, Kind = kind, A = a, B = b, Text = text }); if (Events.Count > 500) Events.RemoveAt(0); }
 
         // ================= Lệnh =================
-        /// <summary>Hai nước phải giáp nhau (qua ranh giới tỉnh), không đang chiến tranh, cả hai còn sống.</summary>
-        public bool DeclareWar(CountryId a, CountryId b)
+        /// <summary>
+        /// Hai nước phải giáp nhau, không đang chiến tranh, cả hai còn sống. Có hiệp ước/liên minh giữa hai nước thì chỉ được
+        /// tuyên chiến khi breakTreaties = true (bội ước: mất uy tín với cả thế giới). Đồng minh của hai bên bị kêu gọi vào cuộc.
+        /// </summary>
+        public bool DeclareWar(CountryId a, CountryId b, bool breakTreaties = false)
         {
             int x = a.Value, y = b.Value; if (x == y || W.Countries[x].Eliminated || W.Countries[y].Eliminated || AtWar(x, y)) return false;
             if (!W.Countries[x].Neighbors.Contains(b)) return false;
+            if (Allied(x, y) || HasPact(x, y))
+            {
+                if (!breakTreaties) return false;
+                bool wasAlly = Allied(x, y); RemoveTreaties(x, y);
+                AdjustOpinion(y, x, wasAlly ? -80 : -50);
+                for (int c = 0; c < W.Countries.Count; c++) if (c != x && c != y) Delta[c, x] -= 20; // bội ước
+                Log("betrayal", x, y, W.Countries[x].Name + " bội ước với " + W.Countries[y].Name);
+            }
             Wars.Add(new War { A = x, B = y, StartWeek = Eco.S.Week, Goal = Math.Max(2, (int)Math.Ceiling(0.25 * W.Countries[y].Provinces.Count)) });
             Eco.SetTradeBlock(a, b, true);
             Log("war", x, y, W.Countries[x].Name + " tuyên chiến với " + W.Countries[y].Name);
+            AdjustOpinion(y, x, -60);
+            for (int c = 0; c < W.Countries.Count; c++) if (c != x && c != y && !Allied(c, x)) Delta[c, x] -= 8; // gây chiến làm mất thiện cảm chung
+            CallAllies(x, y);
             return true;
         }
 
@@ -82,6 +99,7 @@ namespace Vigo.Core.Military
         {
             int x = a.Value, y = b.Value; var w = Wars.FirstOrDefault(q => (q.A == x && q.B == y) || (q.A == y && q.B == x)); if (w == null) return;
             Wars.Remove(w); Eco.SetTradeBlock(a, b, false); LastPeace[Key(x, y)] = Eco.S.Week; LastEnd[x] = Eco.S.Week; LastEnd[y] = Eco.S.Week;
+            foreach (var jw in Wars.Where(q => q.MasterA == w.A && q.MasterB == w.B).ToList()) { Wars.Remove(jw); Eco.SetTradeBlock(new CountryId(jw.A), new CountryId(jw.B), false); LastEnd[jw.A] = Eco.S.Week; LastEnd[jw.B] = Eco.S.Week; }
             Log("peace", x, y, "Hòa bình giữa " + W.Countries[x].Name + " và " + W.Countries[y].Name);
         }
 
@@ -99,7 +117,7 @@ namespace Vigo.Core.Military
         {
             int NC = W.Countries.Count; var S = Eco.S;
             Mobilize(NC); Upkeep(NC);
-            Fight(); CheckPeace();
+            Fight(); CheckPeace(); DiplomacyStep();
             for (int c = 0; c < NC; c++) if (W.Countries[c].Eliminated) { S.Troops[c] = 0; }
             Wars.RemoveAll(q => W.Countries[q.A].Eliminated || W.Countries[q.B].Eliminated);
         }
@@ -142,11 +160,12 @@ namespace Vigo.Core.Military
                     foreach (var pid in W.Countries[df].Provinces) { int p = pid.Value; if (ProvNeighbors[p].Any(n => W.Provinces[n].Owner.Value == at)) fronts.Add(p); }
                     if (fronts.Count == 0) continue;
                     var defThreat = new HashSet<int>(); foreach (var pid in W.Countries[df].Provinces) if (ProvNeighbors[pid.Value].Any(n => W.Provinces[n].Owner.Value == at)) defThreat.Add(pid.Value);
+                    double supAt = Support(at, df), supDf = Support(df, at);
                     double fa = S.Troops[at] / fronts.Count / Math.Max(1, ActiveEnemies(at)), fd = S.Troops[df] / Math.Max(1, defThreat.Count) / Math.Max(1, ActiveEnemies(df));
                     foreach (int p in fronts)
                     {
-                        double att = fa * (0.7 + 0.6 * S.Edu[at]) * Supply[at];
-                        double def = fd * (0.7 + 0.6 * S.Edu[df]) * Supply[df] * _terrain[p] * 1.15;
+                        double att = fa * (0.7 + 0.6 * S.Edu[at]) * Supply[at] * supAt;
+                        double def = fd * (0.7 + 0.6 * S.Edu[df]) * Supply[df] * _terrain[p] * 1.15 * supDf;
                         if (att <= 1e-6) continue;
                         double tot = att + def;
                         lossT[at] += fa * 0.03 * 2 * def / tot; lossT[df] += fd * 0.03 * 2 * att / tot;

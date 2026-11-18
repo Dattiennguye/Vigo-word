@@ -10,8 +10,8 @@ namespace Vigo.Tests
     internal static class MilitaryTests
     {
         private static WorldState Gen(ulong seed) => WorldGenerator.Generate(new WorldConfig { Seed = seed, CellCount = 20000 });
-        private static void Step(EconomySim e, WarSim w, int weeks) { for (int i = 0; i < weeks; i++) { e.StepWeek(); w.StepWeek(); } }
-        private static void Invariants(WorldState w, Action<bool, string> assert)
+        internal static void Step(EconomySim e, WarSim w, int weeks) { for (int i = 0; i < weeks; i++) { e.StepWeek(); w.StepWeek(); } }
+        internal static void Invariants(WorldState w, Action<bool, string> assert)
         {
             for (int p = 0; p < w.Provinces.Count; p++)
             {
@@ -27,13 +27,14 @@ namespace Vigo.Tests
                 assert(c.Provinces.All(pid => w.GetProvince(pid).Owner == c.Id), c.Name + ": tỉnh sai chủ");
             }
         }
-        private static double Sig(EconomySim e, WarSim w)
+        internal static double Sig(EconomySim e, WarSim w)
         {
             double h = 0; for (int c = 0; c < e.S.Stock.Length; c++) { for (int g = 0; g < EconData.GoodCount; g++) h += e.S.Stock[c][g] * (g + 1) * (1 + c % 7); h += e.S.Treasury[c] * 1.37 + e.S.Troops[c] * 3.1; }
             for (int p = 0; p < w.W.Provinces.Count; p++) h += w.W.Provinces[p].Owner.Value * (p % 13 + 1) + w.Progress[p] * 5;
-            return h + e.S.Pop.Sum() * 0.1 + w.Wars.Count * 1000 + w.Events.Count * 7;
+            double dl = 0; for (int i = 0; i < w.Delta.GetLength(0); i++) for (int j = 0; j < w.Delta.GetLength(1); j++) dl += w.Delta[i, j] * (1 + (i * 31 + j) % 5);
+            return h + e.S.Pop.Sum() * 0.1 + w.Wars.Count * 1000 + w.Events.Count * 7 + w.Treaties.Count * 13 + dl;
         }
-        private static (Country a, Country b) Pair(WorldState w) { var a = w.Countries.First(c => c.Neighbors.Count > 0 && c.Provinces.Count >= 8); return (a, w.GetCountry(a.Neighbors[0])); }
+        internal static (Country a, Country b) Pair(WorldState w) { var a = w.Countries.First(c => c.Neighbors.Count > 0 && c.Provinces.Count >= 8); return (a, w.GetCountry(a.Neighbors[0])); }
 
         public static void Register(Action<string, Action> add, Action<bool, string> assert)
         {

@@ -90,8 +90,9 @@ namespace Vigo.Cli
                     }
                     Console.WriteLine($"{war.Events.Count} sự kiện (cuối cùng):");
                     foreach (var e in System.Linq.Enumerable.Skip(war.Events, System.Math.Max(0, war.Events.Count - 12))) Console.WriteLine($"  tuần {e.Week,5} [{e.Kind}] {e.Text}");
-                    int nWar = 0, nCap = 0, nPeace = 0; foreach (var e in war.Events) { if (e.Kind == "war") nWar++; if (e.Kind == "capture") nCap++; if (e.Kind == "peace") nPeace++; }
-                    Console.WriteLine($"tổng (500 sự kiện gần nhất): tuyên chiến {nWar}, chiếm tỉnh {nCap}, hòa {nPeace}; {swWar.ElapsedMilliseconds} ms");
+                    int nWar = 0, nCap = 0, nPeace = 0, nAl = 0, nJoin = 0, nPact = 0; foreach (var e in war.Events) { if (e.Kind == "war") nWar++; if (e.Kind == "capture") nCap++; if (e.Kind == "peace") nPeace++; if (e.Kind == "alliance") nAl++; if (e.Kind == "join") nJoin++; if (e.Kind == "pact") nPact++; }
+                    Console.WriteLine($"liên minh hiện có {war.Treaties.FindAll(t => t.Type == Vigo.Core.Military.TreatyType.Alliance).Count}, hiệp ước {war.Treaties.FindAll(t => t.Type == Vigo.Core.Military.TreatyType.NonAggression).Count}");
+                    Console.WriteLine($"tổng (500 sự kiện gần nhất): tuyên chiến {nWar}, chiếm tỉnh {nCap}, hòa {nPeace}, lập liên minh {nAl}, tham chiến {nJoin}, hiệp ước {nPact}; {swWar.ElapsedMilliseconds} ms");
                     return 0;
                 }
             for (int i = 0; i < args.Length; i++)
