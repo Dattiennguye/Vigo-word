@@ -87,3 +87,20 @@ namespace Vigo.Core.CityBuilder
         public float Employment, Health, Education, Safety, Commute, Environment, Leisure, Pollution, Crime;
     }
 }
+
+
+namespace Vigo.Core.CityBuilder
+{
+    /// <summary>
+    /// Bối cảnh quốc gia áp lên một thành phố (GĐ5). Không gán (null) thì thành phố chạy độc lập như GĐ2.
+    /// Tất cả giá trị 0..1 và đến từ dữ liệu kinh tế/chiến tranh thật qua CityLink.
+    /// </summary>
+    public sealed class NationalContext
+    {
+        public float FoodSat = 1f, FuelSat = 1f, GoodsSat = 1f;
+        /// <summary>Chất lượng dịch vụ y tế/giáo dục quốc gia (từ ngân sách): nhân với độ phủ dịch vụ của thành phố.</summary>
+        public float HealthQuality = 1f, EduQuality = 1f;
+        /// <summary>Tàn phá do chiến sự/vừa bị chiếm (0 = yên bình): tăng tội phạm, giảm ổn định.</summary>
+        public float Devastation = 0f;
+    }
+}

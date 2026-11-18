@@ -6,6 +6,10 @@ namespace Vigo.Core.CityBuilder
     public sealed partial class CitySim
     {
         public CityIndicators Indicators { get; private set; }
+        /// <summary>Bối cảnh quốc gia (null = thành phố độc lập). Gán mỗi tuần trước StepWeek (xem CityLink).</summary>
+        public NationalContext National;
+        /// <summary>Tỉ trọng mức sống quốc gia (lương thực, nhiên liệu, hàng hóa) trong QoL khi có NationalContext.</summary>
+        public const float WNational = 0.25f;
 
         // Trọng số chất lượng sống cho các thành phần ĐÃ được mô phỏng. Thành phần chưa có (lương thực/nước, thu nhập, nhà ở giá rẻ,
         // hòa bình) sẽ được thêm khi kinh tế (GĐ 3) và chiến tranh (GĐ 7) hoạt động; trọng số sẽ được chuẩn hóa lại.
@@ -151,11 +155,21 @@ namespace Vigo.Core.CityBuilder
         private float BuildingQuality(Building r, float unemployment)
         {
             float emp = 1f - C01(unemployment / 0.25f);
-            float crime = C01(0.15f + 0.5f * unemployment - 0.45f * r.CovSafety);
+            float crime = C01(0.15f + 0.5f * unemployment - 0.45f * r.CovSafety + (National != null ? 0.3f * National.Devastation : 0f));
             float commute = r.CommuteDist == float.MaxValue ? 0f : 1f - C01(r.CommuteDist / 2500f);
             float env = 1f - r.Pollution;
-            return WEmp * emp + WHealth * r.CovHealth + WEdu * r.CovEdu + WSafe * (1f - crime) + WCommute * commute + WEnv * env + WLeis * r.CovLeisure;
+            float q = WEmp * emp + WHealth * EffHealth(r) + WEdu * EffEdu(r) + WSafe * (1f - crime) + WCommute * commute + WEnv * env + WLeis * r.CovLeisure;
+            if (National != null)
+            {
+                q = (1f - WNational) * q + WNational * (0.5f * National.FoodSat + 0.2f * National.FuelSat + 0.3f * National.GoodsSat);
+                // Nạn đói là thảm họa phi tuyến: dưới 85% khẩu phần, chất lượng sống bị nhân hệ số 0.4..1 (0% ăn → ×0.4).
+                if (National.FoodSat < 0.85f) q *= 0.4f + 0.6f * (National.FoodSat / 0.85f);
+            }
+            return C01(q);
         }
+        // Độ phủ dịch vụ thực chất = độ phủ của thành phố × chất lượng dịch vụ quốc gia (0.5..1: nhà nước bỏ ngân sách thì bệnh viện/trường kém đi).
+        private float EffHealth(Building r) { return National == null ? r.CovHealth : r.CovHealth * (0.5f + 0.5f * National.HealthQuality); }
+        private float EffEdu(Building r) { return National == null ? r.CovEdu : r.CovEdu * (0.5f + 0.5f * National.EduQuality); }
 
         private CityIndicators ComputeIndicators()
         {
@@ -180,8 +194,8 @@ namespace Vigo.Core.CityBuilder
             {
                 r.Quality = BuildingQuality(r, ind.UnemploymentRate);
                 if (r.Residents <= 0) continue;
-                float w = r.Residents, crime = C01(0.15f + 0.5f * ind.UnemploymentRate - 0.45f * r.CovSafety);
-                sumQ += w * r.Quality; sEmp += w * (1f - C01(ind.UnemploymentRate / 0.25f)); sH += w * r.CovHealth; sE += w * r.CovEdu; sS += w * (1f - crime);
+                float w = r.Residents, crime = C01(0.15f + 0.5f * ind.UnemploymentRate - 0.45f * r.CovSafety + (National != null ? 0.3f * National.Devastation : 0f));
+                sumQ += w * r.Quality; sEmp += w * (1f - C01(ind.UnemploymentRate / 0.25f)); sH += w * EffHealth(r); sE += w * EffEdu(r); sS += w * (1f - crime);
                 sC += w * (r.CommuteDist == float.MaxValue ? 0f : 1f - C01(r.CommuteDist / 2500f)); sEnv += w * (1f - r.Pollution); sL += w * r.CovLeisure; sPol += w * r.Pollution; sCr += w * crime;
                 qs.Add(new KeyValuePair<float, int>(r.Quality, r.Residents));
             }

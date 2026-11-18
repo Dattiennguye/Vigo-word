@@ -34,6 +34,8 @@ namespace Vigo.Core.Military
         /// <summary>Tuần kết thúc cuộc chiến gần nhất của mỗi nước (AI nghỉ sau chiến tranh).</summary>
         public readonly Dictionary<int, int> LastEnd = new Dictionary<int, int>();
         public double[] Progress; public int[] ProgressBy;   // tiến độ chiếm tỉnh theo kẻ tấn công
+        /// <summary>Tuần chiếm gần nhất của mỗi tỉnh (-1 chưa từng); dùng để tính tàn phá cho thành phố.</summary>
+        public int[] CapturedWeek;
         public double[] Supply;                              // hệ số hậu cần 0..1 tuần gần nhất
         public readonly List<int>[] ProvNeighbors; private readonly double[] _terrain;
 
@@ -44,7 +46,7 @@ namespace Vigo.Core.Military
         public WarSim(WorldState w, EconomySim eco)
         {
             W = w; Eco = eco; int NP = w.Provinces.Count, NC = w.Countries.Count;
-            Progress = new double[NP]; ProgressBy = new int[NP]; for (int i = 0; i < NP; i++) ProgressBy[i] = -1;
+            Progress = new double[NP]; ProgressBy = new int[NP]; CapturedWeek = new int[NP]; for (int i = 0; i < NP; i++) CapturedWeek[i] = -1; for (int i = 0; i < NP; i++) ProgressBy[i] = -1;
             Supply = new double[NC]; for (int i = 0; i < NC; i++) Supply[i] = 1;
             ProvNeighbors = new List<int>[NP]; for (int i = 0; i < NP; i++) ProvNeighbors[i] = new List<int>();
             var seen = new HashSet<long>();
@@ -66,6 +68,15 @@ namespace Vigo.Core.Military
         public bool AtWar(int a, int b) => Wars.Any(x => (x.A == a && x.B == b) || (x.A == b && x.B == a));
         public bool AtWar(int a) => Wars.Any(x => x.A == a || x.B == a);
         public double Power(int c) { var S = Eco.S; return S.Troops[c] * (0.7 + 0.6 * S.Edu[c]) * Supply[c]; }
+        /// <summary>Mức tàn phá chiến tranh của một tỉnh (0..1): vừa bị chiếm (giảm dần trong 52 tuần) hoặc đang là tiền tuyến/bị tấn công.</summary>
+        public double Devastation(int province)
+        {
+            double d = 0; int age = Eco.S.Week - CapturedWeek[province];
+            if (CapturedWeek[province] >= 0 && age < 52) d = 0.6 * (1 - age / 52.0);
+            int owner = W.Provinces[province].Owner.Value;
+            if (AtWar(owner) && ProvNeighbors[province].Any(n => AtWar(owner, W.Provinces[n].Owner.Value))) d = Math.Max(d, 0.3 + 0.7 * Math.Min(1, Progress[province]));
+            return d;
+        }
         public bool GameOver(CountryId human) => W.GetCountry(human).Eliminated;
         private void Log(string kind, int a, int b, string text) { Events.Add(new GameEvent { Week = Eco.S.Week, Kind = kind, A = a, B = b, Text = text }); if (Events.Count > 500) Events.RemoveAt(0); }
 
@@ -185,7 +196,7 @@ namespace Vigo.Core.Military
                 int from = prov.Owner.Value; bool wasCapital = W.Countries[from].CapitalProvince.Value == p;
                 if (WorldOps.TransferProvince(W, prov.Id, new CountryId(at)))
                 {
-                    Progress[p] = 0; ProgressBy[p] = -1;
+                    Progress[p] = 0; ProgressBy[p] = -1; CapturedWeek[p] = Eco.S.Week;
                     Eco.DamageProvince(prov.Id, 0.4); Eco.S.Pop[p] *= 0.95; // hạ tầng bị tàn phá khi bị chiếm
                     var wr = Wars.FirstOrDefault(q => (q.A == at && q.B == from) || (q.A == from && q.B == at)); if (wr != null && wr.A == at) wr.Captured += wasCapital ? 3 : 1;
                     Log("capture", at, from, W.Countries[at].Name + " chiếm " + prov.Name + (wasCapital ? " (thủ đô)" : "") + " của " + W.Countries[from].Name);

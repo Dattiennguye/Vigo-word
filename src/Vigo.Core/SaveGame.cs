@@ -15,7 +15,7 @@ namespace Vigo.Core
     /// </summary>
     public static class SaveGame
     {
-        public const int Version = 3;
+        public const int Version = 4;
         private const uint Magic = 0x4F474956; // "VIGO"
 
         public sealed class SaveException : Exception { public SaveException(string m) : base(m) { } }
@@ -107,7 +107,7 @@ namespace Vigo.Core
             if (war != null)
             {
                 b.Write(war.Wars.Count); foreach (var q in war.Wars) { b.Write(q.A); b.Write(q.B); b.Write(q.StartWeek); b.Write(q.Goal); b.Write(q.Captured); b.Write(q.MasterA); b.Write(q.MasterB); }
-                Arr(b, war.Progress); b.Write(war.ProgressBy.Length); foreach (int v in war.ProgressBy) b.Write(v); Arr(b, war.Supply);
+                Arr(b, war.Progress); b.Write(war.CapturedWeek.Length); foreach (int v in war.CapturedWeek) b.Write(v); b.Write(war.ProgressBy.Length); foreach (int v in war.ProgressBy) b.Write(v); Arr(b, war.Supply);
                 var lp = new List<KeyValuePair<long, int>>(war.LastPeace); lp.Sort((x, y) => x.Key.CompareTo(y.Key)); b.Write(lp.Count); foreach (var kv in lp) { b.Write(kv.Key); b.Write(kv.Value); }
                 var le = new List<KeyValuePair<int, int>>(war.LastEnd); le.Sort((x, y) => x.Key.CompareTo(y.Key)); b.Write(le.Count); foreach (var kv in le) { b.Write(kv.Key); b.Write(kv.Value); }
                 b.Write(war.Treaties.Count); foreach (var t in war.Treaties) { b.Write((byte)t.Type); b.Write(t.A); b.Write(t.B); b.Write(t.StartWeek); b.Write(t.Expire); }
@@ -182,7 +182,7 @@ namespace Vigo.Core
             {
                 war = new WarSim(w, eco);
                 int nw = r.ReadInt32(); for (int i = 0; i < nw; i++) war.Wars.Add(new War { A = r.ReadInt32(), B = r.ReadInt32(), StartWeek = r.ReadInt32(), Goal = r.ReadInt32(), Captured = r.ReadInt32(), MasterA = r.ReadInt32(), MasterB = r.ReadInt32() });
-                war.Progress = ArrR(r); int npb = r.ReadInt32(); war.ProgressBy = new int[npb]; for (int i = 0; i < npb; i++) war.ProgressBy[i] = r.ReadInt32(); war.Supply = ArrR(r);
+                war.Progress = ArrR(r); int ncw = r.ReadInt32(); if (ncw != war.CapturedWeek.Length) throw new SaveException("số tỉnh không khớp"); for (int i = 0; i < ncw; i++) war.CapturedWeek[i] = r.ReadInt32(); int npb = r.ReadInt32(); war.ProgressBy = new int[npb]; for (int i = 0; i < npb; i++) war.ProgressBy[i] = r.ReadInt32(); war.Supply = ArrR(r);
                 int nl = r.ReadInt32(); for (int i = 0; i < nl; i++) war.LastPeace[r.ReadInt64()] = r.ReadInt32();
                 int nle = r.ReadInt32(); for (int i = 0; i < nle; i++) war.LastEnd[r.ReadInt32()] = r.ReadInt32();
                 int ntr = r.ReadInt32(); for (int i = 0; i < ntr; i++) war.Treaties.Add(new Treaty { Type = (TreatyType)r.ReadByte(), A = r.ReadInt32(), B = r.ReadInt32(), StartWeek = r.ReadInt32(), Expire = r.ReadInt32() });

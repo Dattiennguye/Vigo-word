@@ -39,5 +39,8 @@ Chưa nối với CitySim/QoL; chưa có AI ngân sách (nước nghèo đất n
 ## GĐ4c – Liên minh, hiệp ước, hòa đàm (XONG, 60 test pass) — xem docs/PHASE4C.md
 Trong `WarSim`: `ProposeAlliance/ProposePact/BreakAlliance`, `DeclareWar(a,b,breakTreaties)`, `JoinWar`, `ProposeTerms(winner,loser,cede,reparations)`, `GetOpinion`, `Allies`, `Treaties`. `DiplomacyAI{Treaties=true}`; `SetHuman` cho người chơi. SaveGame phiên bản 3. Hằng số chưa cân bằng theo trải nghiệm chơi.
 
+## GĐ5 – Nối thành phố với quốc gia (XONG, 66 test pass) — xem docs/PHASE5.md
+`new CityLink(world, eco, war).Apply(citySim, cityId)` trước mỗi `citySim.StepWeek()`; `CitySim.National` (null = độc lập). Một chiều quốc gia → thành phố. SaveGame phiên bản 4 (CapturedWeek). CitySim CHƯA được lưu.
+
 ## Sau đó
-GĐ4d: hải quân, AI dùng ProposeTerms, hiệp ước thương mại; nối QoL thành phố ↔ kinh tế quốc gia; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
+GĐ6: lưu CitySim trong SaveGame, chiều ngược thành phố → quốc gia, AI đề nghị liên minh tới người chơi, hải quân, AI dùng ProposeTerms, hiệp ước thương mại; lệnh chỉ huy chiến dịch; command layer thống nhất; hoàn thiện; Unity spike cho Windows+Android (không chạy được trong môi trường cloud).
